@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}{{ club.name }} - Ticket Manager - Tixlinx{% endblock %}
+{% block content %}
+
+<a href="{{ url_for('main.ticket_manager') }}" class="text-sm inline-flex items-center gap-1 mb-6" style="color:var(--muted)">
+  &larr; Back to clubs
+</a>
+
+<div class="flex items-center gap-4 mb-8">
+
+  {% if club.slug == "man-utd" %}
+    <!-- Manchester United Logo -->
+    <div
+      class="flex items-center justify-center flex-shrink-0"
+      style="width:64px; height:64px;"
+    >
+      <img
+        src="{{ url_for('static', filename='images/manutd.png') }}"
+        alt="Manchester United"
+        style="
+          width:64px;
+          height:64px;
+          object-fit:contain;
+        "
+      >
+    </div>
+  {% else %}
+    <!-- Default club icon -->
+    <div
+      class="rounded-full flex items-center justify-center flex-shrink-0"
+      style="
+        width:56px;
+        height:56px;
+        background:{{ club.color }};
+        color:#fff;
+        font-family:var(--font-display);
+        font-weight:700;
+        font-size:1.3rem;
+        border:2px solid var(--border);
+      "
+    >
+      {{ club.name[0] }}
+    </div>
+  {% endif %}
+
+  <div>
+    <p class="eyebrow mb-1">Ticket Manager</p>
+    <h1 class="display text-3xl">{{ club.name }}</h1>
+  </div>
+
+</div>
+
+<p class="eyebrow mb-4">Upcoming matches</p>
+
+{% if matches %}
+  <div class="space-y-3">
+
+    {% for match in matches %}
+
+      <a
+        href="{{ url_for('main.match_generate', slug=club.slug, match_id=match.id) }}"
+        class="ticket-row flex items-center justify-between fade-up"
+        style="text-decoration:none;"
+      >
+
+        <div>
+          <p class="text-base font-medium">
+            {{ match.home_team }}
+            <span style="color:var(--muted)">v</span>
+            {{ match.away_team }}
+          </p>
+
+          {% if match.kickoff_at %}
+            <p class="text-xs mono mt-1" style="color:var(--muted)">
+              {{ match.kickoff_at.strftime('%d %b %Y, %H:%M') }}
+            </p>
+          {% else %}
+            <p class="text-xs mono mt-1" style="color:var(--muted)">
+              Date to be confirmed
+            </p>
+          {% endif %}
+        </div>
+
+        <span class="btn btn-ghost" style="pointer-events:none">
+          Select &rarr;
+        </span>
+
+      </a>
+
+    {% endfor %}
+
+  </div>
+
+{% else %}
+
+  <div class="ticket-row text-sm" style="color:var(--muted)">
+    No upcoming matches listed for {{ club.name }} yet. Check back soon.
+  </div>
+
+{% endif %}
+
+{% endblock %}

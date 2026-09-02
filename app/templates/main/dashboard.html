@@ -1,0 +1,818 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Tixlinx{% endblock %}
+
+{% block content %}
+
+<div class="mb-10">
+  <p class="eyebrow mb-2">Welcome back</p>
+  <h1 class="display text-3xl">{{ current_user.name }}</h1>
+</div>
+
+
+<!-- Balance / Ticket Manager -->
+<div class="grid md:grid-cols-3 gap-6 mb-10">
+
+  <div class="md:col-span-2 ticket fade-up">
+
+    <div class="ticket-body">
+
+      <p class="eyebrow mb-3">Balance</p>
+
+      <div class="flex items-end gap-2 mb-4">
+
+        <span
+          class="credit-counter"
+          data-counter
+          data-value="{{ current_user.credits }}"
+        >0</span>
+
+        <span class="unit">
+          credits &middot; &pound;{{ current_user.credits }}.00 value
+        </span>
+
+      </div>
+
+      <div class="barcode mb-4">
+        {% for i in range(48) %}
+          <span style="height:{{ (10 + (i * 37) % 16) }}px"></span>
+        {% endfor %}
+      </div>
+
+      <a
+        href="{{ url_for('billing.buy_credits_page') }}"
+        class="btn btn-primary"
+      >
+        Buy more credits
+      </a>
+
+    </div>
+
+    <div class="ticket-stub">
+      <span class="ticket-stub-label">Balance</span>
+    </div>
+
+  </div>
+
+
+  <div class="ticket-row fade-up flex flex-col justify-between">
+
+    <div>
+
+      <p class="eyebrow mb-3">
+        Ticket Manager
+      </p>
+
+      <p class="text-sm mb-4" style="color:var(--muted)">
+        Pick a club and generate a ticket link - each success spends 1 credit.
+      </p>
+
+    </div>
+
+    <a
+      href="{{ url_for('main.ticket_manager') }}"
+      class="btn btn-primary btn-block"
+    >
+      Open Ticket Manager
+    </a>
+
+  </div>
+
+</div>
+
+
+<!-- ===================================================== -->
+<!-- UPCOMING TICKETS -->
+<!-- ===================================================== -->
+
+<div class="mb-10">
+
+  <div class="flex items-center justify-between mb-4">
+
+    <h2 class="display text-xl">
+      Upcoming tickets
+    </h2>
+
+    {% if upcoming_tickets %}
+
+      <button
+        type="button"
+        id="download-tickets-csv"
+        class="btn btn-ghost"
+      >
+        Download CSV
+      </button>
+
+    {% endif %}
+
+  </div>
+
+
+  {% if upcoming_tickets %}
+
+    <div class="space-y-2">
+
+      {% for t in upcoming_tickets %}
+
+        <div
+          class="ticket-row flex items-center justify-between fade-up"
+        >
+
+          <div class="min-w-0 flex-1">
+
+            <!-- Match -->
+            <p class="text-sm font-medium">
+              {{ t.match_name }}
+            </p>
+
+
+            <!-- Account + date -->
+            <p
+              class="text-xs mt-1"
+              style="color:var(--muted)"
+            >
+
+              {{ t.account_email }}
+
+              &middot;
+
+              {% if t.event_date %}
+
+                {{ t.event_date.strftime('%d %b %Y, %H:%M') }}
+
+              {% else %}
+
+                Date TBC
+
+              {% endif %}
+
+            </p>
+
+
+            <!-- Link -->
+            {% if t.ticket_link %}
+
+              <div class="flex items-center gap-2 mt-2">
+
+                <a
+                  href="{{ t.ticket_link }}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-xs mono break-all"
+                  style="
+                    color:var(--accent-2);
+                    min-width:0;
+                  "
+                >
+                  {{ t.ticket_link }}
+                </a>
+
+
+                <button
+                  type="button"
+                  class="btn btn-ghost copy-ticket-link flex-shrink-0"
+                  data-link="{{ t.ticket_link }}"
+                  style="
+                    padding:0.35rem 0.65rem;
+                    font-size:0.75rem;
+                    white-space:nowrap;
+                  "
+                >
+                  Copy
+                </button>
+
+              </div>
+
+            {% endif %}
+
+          </div>
+
+
+          <!-- Generated date -->
+          <span
+            class="text-xs mono flex-shrink-0 ml-4"
+            style="color:var(--muted)"
+          >
+            Generated {{ t.generated_at.strftime('%d %b') }}
+          </span>
+
+        </div>
+
+      {% endfor %}
+
+    </div>
+
+
+  {% else %}
+
+    <p
+      class="text-sm"
+      style="color:var(--muted)"
+    >
+      No upcoming tickets yet - generate one from the Ticket Manager.
+    </p>
+
+  {% endif %}
+
+</div>
+
+
+
+<!-- ===================================================== -->
+<!-- PREVIOUS TICKETS -->
+<!-- ===================================================== -->
+
+<div class="mb-10">
+
+  <h2 class="display text-xl mb-4">
+    Previous tickets
+  </h2>
+
+
+  {% if previous_tickets %}
+
+    <div class="space-y-2">
+
+      {% for t in previous_tickets %}
+
+        <div
+          class="ticket-row flex items-center justify-between"
+          style="opacity:0.75;"
+        >
+
+          <div class="min-w-0 flex-1">
+
+            <!-- Match -->
+            <p class="text-sm font-medium">
+              {{ t.match_name }}
+            </p>
+
+
+            <!-- Account + date -->
+            <p
+              class="text-xs mt-1"
+              style="color:var(--muted)"
+            >
+
+              {{ t.account_email }}
+
+              &middot;
+
+              {% if t.event_date %}
+
+                {{ t.event_date.strftime('%d %b %Y, %H:%M') }}
+
+              {% else %}
+
+                Date TBC
+
+              {% endif %}
+
+            </p>
+
+
+            <!-- Link -->
+            {% if t.ticket_link %}
+
+              <div class="flex items-center gap-2 mt-2">
+
+                <a
+                  href="{{ t.ticket_link }}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-xs mono break-all"
+                  style="
+                    color:var(--accent-2);
+                    min-width:0;
+                  "
+                >
+                  {{ t.ticket_link }}
+                </a>
+
+
+                <button
+                  type="button"
+                  class="btn btn-ghost copy-ticket-link flex-shrink-0"
+                  data-link="{{ t.ticket_link }}"
+                  style="
+                    padding:0.35rem 0.65rem;
+                    font-size:0.75rem;
+                    white-space:nowrap;
+                  "
+                >
+                  Copy
+                </button>
+
+              </div>
+
+            {% endif %}
+
+          </div>
+
+
+          <!-- Generated date -->
+          <span
+            class="text-xs mono flex-shrink-0 ml-4"
+            style="color:var(--muted)"
+          >
+            Generated {{ t.generated_at.strftime('%d %b') }}
+          </span>
+
+        </div>
+
+      {% endfor %}
+
+    </div>
+
+
+  {% else %}
+
+    <p
+      class="text-sm"
+      style="color:var(--muted)"
+    >
+      No past tickets yet.
+    </p>
+
+  {% endif %}
+
+</div>
+
+
+
+<!-- ===================================================== -->
+<!-- RECENT TRANSACTIONS + RECENT LINK GENERATIONS -->
+<!-- ===================================================== -->
+
+<div class="grid md:grid-cols-2 gap-8">
+
+
+  <!-- Recent transactions -->
+  <div>
+
+    <h2 class="display text-xl mb-4">
+      Recent transactions
+    </h2>
+
+
+    {% if transactions %}
+
+      <div class="space-y-2">
+
+        {% for tx in transactions %}
+
+          <div
+            class="ticket-row flex items-center justify-between"
+          >
+
+            <div>
+
+              <p class="text-sm">
+                {{ tx.description or tx.type|capitalize }}
+              </p>
+
+              <p
+                class="text-xs mono"
+                style="color:var(--muted)"
+              >
+                {{ tx.created_at.strftime('%d %b %Y, %H:%M') }}
+              </p>
+
+            </div>
+
+
+            <span
+              class="mono text-sm"
+              style="
+                color:
+                {{ 'var(--success)' if tx.amount > 0 else 'var(--danger)' }}
+              "
+            >
+
+              {{ '+' if tx.amount > 0 else '' }}{{ tx.amount }}
+
+            </span>
+
+          </div>
+
+        {% endfor %}
+
+      </div>
+
+
+    {% else %}
+
+      <p
+        class="text-sm"
+        style="color:var(--muted)"
+      >
+        No transactions yet.
+      </p>
+
+    {% endif %}
+
+  </div>
+
+
+
+  <!-- ================================================= -->
+  <!-- RECENT LINK GENERATIONS -->
+  <!-- LAST 5 -->
+  <!-- ================================================= -->
+
+  <div>
+
+    <h2 class="display text-xl mb-4">
+      Recent link generations
+    </h2>
+
+
+    {% if links %}
+
+      <div class="space-y-2">
+
+        {% for link in links %}
+
+          <div class="ticket-row">
+
+
+            <!-- Status + date -->
+            <div
+              class="flex items-center justify-between mb-2"
+            >
+
+              <span
+                class="text-sm"
+                style="
+                  color:
+                  {{ 'var(--success)' if link.success else 'var(--danger)' }}
+                "
+              >
+
+                {{ 'Success' if link.success else 'Failed' }}
+
+              </span>
+
+
+              <span
+                class="text-xs mono"
+                style="color:var(--muted)"
+              >
+                {{ link.created_at.strftime('%d %b %Y, %H:%M') }}
+              </span>
+
+            </div>
+
+
+
+            <!-- Account + Match -->
+            {% if link.payload_data %}
+
+              <p
+                class="text-xs mb-1"
+                style="color:var(--muted)"
+              >
+                Account
+              </p>
+
+              <p class="text-sm font-medium mb-2">
+                {{ link.payload_data.email }}
+              </p>
+
+
+              <p
+                class="text-xs mb-1"
+                style="color:var(--muted)"
+              >
+                Match
+              </p>
+
+              <p class="text-sm mb-3">
+                {{ link.payload_data.match_name }}
+              </p>
+
+            {% endif %}
+
+
+
+            <!-- Generated link -->
+            {% if link.generated_link %}
+
+              <div class="flex items-center gap-2">
+
+                <a
+                  href="{{ link.generated_link }}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-xs mono break-all"
+                  style="
+                    color:var(--accent-2);
+                    min-width:0;
+                  "
+                >
+                  {{ link.generated_link }}
+                </a>
+
+
+                <button
+                  type="button"
+                  class="btn btn-ghost copy-ticket-link flex-shrink-0"
+                  data-link="{{ link.generated_link }}"
+                  style="
+                    padding:0.35rem 0.65rem;
+                    font-size:0.75rem;
+                    white-space:nowrap;
+                  "
+                >
+                  Copy
+                </button>
+
+              </div>
+
+            {% endif %}
+
+
+          </div>
+
+        {% endfor %}
+
+      </div>
+
+
+    {% else %}
+
+      <p
+        class="text-sm"
+        style="color:var(--muted)"
+      >
+        No link generations yet.
+      </p>
+
+    {% endif %}
+
+  </div>
+
+</div>
+
+
+
+<!-- ===================================================== -->
+<!-- JAVASCRIPT -->
+<!-- ===================================================== -->
+
+<script>
+
+document.addEventListener("DOMContentLoaded", () => {
+
+
+  /*
+   * =====================================================
+   * COPY BUTTONS
+   * =====================================================
+   */
+
+  document
+    .querySelectorAll(".copy-ticket-link")
+    .forEach((button) => {
+
+      button.addEventListener("click", async () => {
+
+        const link = button.dataset.link;
+
+        if (!link) {
+          return;
+        }
+
+
+        const originalText = button.textContent;
+
+
+        try {
+
+          await navigator.clipboard.writeText(link);
+
+          button.textContent = "Copied!";
+
+
+        } catch (err) {
+
+          /*
+           * Fallback for browsers where Clipboard API
+           * is unavailable.
+           */
+
+          const textarea = document.createElement("textarea");
+
+          textarea.value = link;
+
+          textarea.style.position = "fixed";
+          textarea.style.opacity = "0";
+
+          document.body.appendChild(textarea);
+
+          textarea.focus();
+          textarea.select();
+
+
+          try {
+
+            document.execCommand("copy");
+
+          } catch (copyError) {
+
+            console.error(
+              "Copy failed:",
+              copyError
+            );
+
+          }
+
+
+          textarea.remove();
+
+          button.textContent = "Copied!";
+
+        }
+
+
+        setTimeout(() => {
+
+          button.textContent = originalText;
+
+        }, 2000);
+
+      });
+
+    });
+
+
+
+  /*
+   * =====================================================
+   * DOWNLOAD UPCOMING + PREVIOUS TICKETS CSV
+   * =====================================================
+   */
+
+  const downloadButton =
+    document.getElementById(
+      "download-tickets-csv"
+    );
+
+
+  if (downloadButton) {
+
+    downloadButton.addEventListener(
+      "click",
+      () => {
+
+
+        /*
+         * Build ticket list from Upcoming
+         * and Previous tickets.
+         */
+
+        const tickets = [
+
+          {% for t in upcoming_tickets %}
+
+            {% if t.ticket_link %}
+
+              {
+                email: {{ t.account_email|tojson }},
+                match_name: {{ t.match_name|tojson }},
+                link: {{ t.ticket_link|tojson }}
+              },
+
+            {% endif %}
+
+          {% endfor %}
+
+
+
+          {% for t in previous_tickets %}
+
+            {% if t.ticket_link %}
+
+              {
+                email: {{ t.account_email|tojson }},
+                match_name: {{ t.match_name|tojson }},
+                link: {{ t.ticket_link|tojson }}
+              }{% if not loop.last %},{% endif %}
+
+            {% endif %}
+
+          {% endfor %}
+
+        ];
+
+
+        if (!tickets.length) {
+
+          alert(
+            "There are no tickets with links to download."
+          );
+
+          return;
+
+        }
+
+
+        /*
+         * CSV header
+         */
+
+        let csv =
+          "email,match_name,link\n";
+
+
+        /*
+         * CSV rows
+         */
+
+        tickets.forEach((ticket) => {
+
+          const row = [
+
+            ticket.email,
+            ticket.match_name,
+            ticket.link
+
+          ]
+          .map((value) => {
+
+            /*
+             * Escape double quotes
+             * for valid CSV.
+             */
+
+            return '"' +
+              String(value || "")
+                .replace(/"/g, '""') +
+              '"';
+
+          })
+          .join(",");
+
+
+          csv += row + "\n";
+
+        });
+
+
+        /*
+         * Create downloadable CSV.
+         */
+
+        const blob = new Blob(
+          [csv],
+          {
+            type: "text/csv;charset=utf-8;"
+          }
+        );
+
+
+        const url =
+          URL.createObjectURL(blob);
+
+
+        const downloadLink =
+          document.createElement("a");
+
+
+        downloadLink.href = url;
+
+        downloadLink.download =
+          "tickets.csv";
+
+
+        document.body.appendChild(
+          downloadLink
+        );
+
+
+        downloadLink.click();
+
+
+        document.body.removeChild(
+          downloadLink
+        );
+
+
+        URL.revokeObjectURL(url);
+
+      }
+    );
+
+  }
+
+});
+
+</script>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+
+{% endblock %}

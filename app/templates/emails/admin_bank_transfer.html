@@ -1,0 +1,23 @@
+<div style="font-family: -apple-system, Arial, sans-serif; max-width: 480px; margin: 0 auto; background:#0e1220; color:#edeff7; border-radius:16px; overflow:hidden; border:1px solid #262b40;">
+  <div style="padding:28px 28px 0 28px;">
+    <p style="font-size:11px; letter-spacing:2px; text-transform:uppercase; color:#1fb8a6; margin:0 0 6px 0;">Bank transfer expected</p>
+    <h2 style="margin:0 0 20px 0; font-size:22px;">Confirm receipt to add credits</h2>
+  </div>
+  <div style="padding:0 28px;">
+    <table style="width:100%; font-size:14px; border-collapse:collapse;">
+      <tr><td style="color:#8890a6; padding:6px 0;">Customer</td><td style="padding:6px 0; text-align:right;">{{ user.name }}</td></tr>
+      <tr><td style="color:#8890a6; padding:6px 0;">Email</td><td style="padding:6px 0; text-align:right;">{{ user.email }}</td></tr>
+      <tr><td style="color:#8890a6; padding:6px 0;">Credits</td><td style="padding:6px 0; text-align:right;">{{ transfer.credits }}</td></tr>
+      <tr><td style="color:#8890a6; padding:6px 0;">Reference</td><td style="padding:6px 0; text-align:right;">{{ transfer.reference }}</td></tr>
+      <tr><td style="color:#8890a6; padding:6px 0;">Submitted</td><td style="padding:6px 0; text-align:right;">{{ transfer.created_at.strftime('%d %b %Y, %H:%M UTC') }}</td></tr>
+    </table>
+  </div>
+  <div style="padding:28px;">
+    <a href="{{ confirm_url }}" style="display:block; text-align:center; background:#f5b942; color:#1a1508; font-weight:600; padding:14px; border-radius:10px; text-decoration:none;">
+      Confirm funds received &amp; add credits
+    </a>
+    <p style="font-size:12px; color:#8890a6; margin-top:14px;">
+      Only click this once you've verified the transfer with reference {{ transfer.reference }} has landed in the account. This link can only be used once.
+    </p>
+  </div>
+</div>

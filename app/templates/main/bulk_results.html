@@ -1,0 +1,367 @@
+{% extends "base.html" %}
+
+{% block title %}Bulk results - {{ match.name }} - Tixlinx{% endblock %}
+
+{% block content %}
+
+<a
+  href="{{ url_for('main.match_generate', slug=club.slug, match_id=match.id) }}"
+  class="text-sm inline-flex items-center gap-1 mb-6"
+  style="color:var(--muted)"
+>
+  &larr; Back to {{ match.name }}
+</a>
+
+
+<p class="eyebrow mb-2">
+  Bulk upload results
+</p>
+
+<h1 class="display text-3xl mb-2">
+  {{ match.name }}
+</h1>
+
+<p class="text-sm mb-8" style="color:var(--muted)">
+  {{ results|selectattr('success')|list|length }} of {{ total }} account(s) succeeded.
+
+  {% if results|length < total %}
+    Stopped early - your credit balance ran out before every row could be tried.
+  {% endif %}
+</p>
+
+
+<!-- Actions -->
+<div class="flex flex-wrap gap-3 mb-6">
+
+  <button
+    type="button"
+    id="copy-all-links"
+    class="btn btn-ghost"
+  >
+    Copy all links
+  </button>
+
+  <button
+    type="button"
+    id="download-csv"
+    class="btn btn-primary"
+  >
+    Download CSV
+  </button>
+
+</div>
+
+
+<!-- Results -->
+<div class="space-y-2" id="bulk-results">
+
+  {% for r in results %}
+
+    <div
+      class="ticket-row flex items-center justify-between"
+      data-success="{{ 'true' if r.success else 'false' }}"
+      data-email="{{ r.email or '' }}"
+      data-link="{{ r.link or '' }}"
+    >
+
+      <div class="min-w-0 flex-1">
+
+        <p class="text-sm truncate">
+          {{ r.email or 'Unknown account' }}
+        </p>
+
+
+        {% if r.success %}
+
+          <div class="flex items-center gap-2 mt-1">
+
+            <p
+              class="text-xs mono truncate"
+              style="color:var(--accent-2); min-width:0;"
+            >
+              {{ r.link }}
+            </p>
+
+            <button
+              type="button"
+              class="copy-result-link btn btn-ghost flex-shrink-0"
+              style="padding:0.3rem 0.6rem; font-size:0.75rem;"
+              data-link="{{ r.link }}"
+            >
+              Copy
+            </button>
+
+          </div>
+
+
+          {% if r.reused %}
+
+            <p
+              class="text-xs mt-1"
+              style="color:var(--muted)"
+            >
+              Reused existing link - no credit charged
+            </p>
+
+          {% endif %}
+
+        {% else %}
+
+          <p
+            class="text-xs mt-1"
+            style="color:var(--danger)"
+          >
+            {{ r.message or r.error }}
+          </p>
+
+        {% endif %}
+
+      </div>
+
+
+      <span
+        class="text-sm flex-shrink-0 ml-4"
+        style="color: {{ 'var(--success)' if r.success else 'var(--danger)' }}"
+      >
+        {{ 'Success' if r.success else 'Failed' }}
+      </span>
+
+    </div>
+
+  {% endfor %}
+
+</div>
+
+
+<!-- Balance -->
+<div class="ticket-row mt-6 flex items-center justify-between">
+
+  <p class="text-sm">
+    Balance remaining
+  </p>
+
+  <span class="mono">
+    {{ results[-1].credits_remaining if results else current_user.credits }}
+    credits
+  </span>
+
+</div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  /*
+   * Copy individual link
+   */
+  document.querySelectorAll(".copy-result-link").forEach((button) => {
+
+    button.addEventListener("click", async () => {
+
+      const link = button.dataset.link;
+
+      if (!link) return;
+
+      try {
+
+        await navigator.clipboard.writeText(link);
+
+        const originalText = button.textContent;
+
+        button.textContent = "Copied!";
+
+        setTimeout(() => {
+          button.textContent = originalText;
+        }, 2000);
+
+      } catch (err) {
+
+        console.error("Copy failed:", err);
+
+        const temp = document.createElement("textarea");
+        temp.value = link;
+        document.body.appendChild(temp);
+
+        temp.select();
+        document.execCommand("copy");
+
+        temp.remove();
+
+        button.textContent = "Copied!";
+
+        setTimeout(() => {
+          button.textContent = "Copy";
+        }, 2000);
+
+      }
+
+    });
+
+  });
+
+
+  /*
+   * Copy all successful links
+   *
+   * Format:
+   * email - link
+   */
+  const copyAllButton = document.getElementById("copy-all-links");
+
+  copyAllButton.addEventListener("click", async () => {
+
+    const rows = document.querySelectorAll(
+      '#bulk-results [data-success="true"]'
+    );
+
+    const links = [];
+
+    rows.forEach((row) => {
+
+      const email = row.dataset.email;
+      const link = row.dataset.link;
+
+      if (link) {
+        links.push(`${email} - ${link}`);
+      }
+
+    });
+
+    if (!links.length) {
+
+      copyAllButton.textContent = "No links";
+
+      setTimeout(() => {
+        copyAllButton.textContent = "Copy all links";
+      }, 2000);
+
+      return;
+    }
+
+
+    const text = links.join("\n");
+
+    try {
+
+      await navigator.clipboard.writeText(text);
+
+      copyAllButton.textContent = "Copied!";
+
+      setTimeout(() => {
+        copyAllButton.textContent = "Copy all links";
+      }, 2000);
+
+    } catch (err) {
+
+      const temp = document.createElement("textarea");
+
+      temp.value = text;
+
+      document.body.appendChild(temp);
+
+      temp.select();
+
+      document.execCommand("copy");
+
+      temp.remove();
+
+      copyAllButton.textContent = "Copied!";
+
+      setTimeout(() => {
+        copyAllButton.textContent = "Copy all links";
+      }, 2000);
+
+    }
+
+  });
+
+
+  /*
+   * Download CSV
+   *
+   * Columns:
+   * email,link,match.name
+   */
+  const downloadButton = document.getElementById("download-csv");
+
+  downloadButton.addEventListener("click", () => {
+
+    const rows = document.querySelectorAll(
+      '#bulk-results [data-success="true"]'
+    );
+
+    const csvRows = [];
+
+    // CSV header
+    csvRows.push([
+      "email",
+      "link",
+      "match.name"
+    ]);
+
+
+    rows.forEach((row) => {
+
+      const email = row.dataset.email || "";
+      const link = row.dataset.link || "";
+      const matchName = {{ match.name|tojson }};
+
+      csvRows.push([
+        email,
+        link,
+        matchName
+      ]);
+
+    });
+
+
+    /*
+     * Convert rows into CSV.
+     * Quotes are escaped correctly.
+     */
+    const csv = csvRows
+      .map((row) => {
+        return row
+          .map((value) => {
+            value = String(value ?? "");
+
+            return '"' +
+              value.replace(/"/g, '""') +
+              '"';
+          })
+          .join(",");
+      })
+      .join("\r\n");
+
+
+    const blob = new Blob(
+      [csv],
+      {
+        type: "text/csv;charset=utf-8;"
+      }
+    );
+
+
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+
+    link.href = url;
+
+    link.download =
+      "{{ club.slug }}-{{ match.id }}-results.csv";
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+
+  });
+
+});
+</script>
+
+{% endblock %}

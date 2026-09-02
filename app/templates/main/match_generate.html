@@ -1,0 +1,289 @@
+{% extends "base.html" %}
+{% block title %}{{ match.name }} - Ticket Manager - Tixlinx{% endblock %}
+{% block content %}
+
+<a href="{{ url_for('main.club_matches', slug=club.slug) }}"
+   class="text-sm inline-flex items-center gap-1 mb-6"
+   style="color:var(--muted)">
+  &larr; Back to matches
+</a>
+
+<div class="flex items-center gap-4 mb-8">
+
+  {% if club.slug == "man-utd" %}
+    <!-- Manchester United Logo -->
+    <div
+      class="flex items-center justify-center flex-shrink-0"
+      style="width:64px; height:64px;"
+    >
+      <img
+        src="{{ url_for('static', filename='images/manutd.png') }}"
+        alt="Manchester United"
+        style="
+          width:64px;
+          height:64px;
+          object-fit:contain;
+        "
+      >
+    </div>
+  {% else %}
+    <!-- Default club icon -->
+    <div
+      class="rounded-full flex items-center justify-center flex-shrink-0"
+      style="
+        width:56px;
+        height:56px;
+        background:{{ club.color }};
+        color:#fff;
+        font-family:var(--font-display);
+        font-weight:700;
+        font-size:1.3rem;
+        border:2px solid var(--border);
+      "
+    >
+      {{ club.name[0] }}
+    </div>
+  {% endif %}
+
+  <div>
+    <p class="eyebrow mb-1">Ticket Manager</p>
+
+    <h1 class="display text-3xl">
+      {{ match.home_team }}
+      <span style="color:var(--muted)">v</span>
+      {{ match.away_team }}
+    </h1>
+  </div>
+
+</div>
+
+
+<div class="grid md:grid-cols-3 gap-6 items-start">
+
+  <div class="md:col-span-2 space-y-6">
+
+    <!-- Single account -->
+    <div class="ticket fade-up">
+
+      <div class="ticket-body">
+
+        <p class="eyebrow mb-3">Single account</p>
+
+        <form
+          id="generate-link-form"
+          data-match-name="{{ match.name }}"
+          data-match-id="{{ match.id }}"
+          data-club="{{ club.slug }}"
+          class="space-y-4"
+        >
+
+          <div class="field">
+            <label for="account_email">Supporter ID</label>
+
+            <input
+              type="text"
+              id="account_email"
+              name="Supporter ID"
+              placeholder="1245678"
+              required
+              autocomplete="off"
+            >
+          </div>
+
+
+          <div class="field">
+            <label for="account_password">Password</label>
+
+            <input
+              type="password"
+              id="account_password"
+              name="account_password"
+              placeholder="Account password"
+              required
+              autocomplete="off"
+            >
+          </div>
+
+
+          <div class="field">
+            <label for="account_proxy">
+              Proxy
+              <span style="color:var(--muted); text-transform:none; letter-spacing:normal;">
+                (optional)
+              </span>
+            </label>
+
+            <input
+              type="text"
+              id="account_proxy"
+              name="account_proxy"
+              placeholder="user:pass@host:port or host:port"
+            >
+          </div>
+
+
+          <div class="field">
+            <label>Match</label>
+
+            <input
+              type="text"
+              value="{{ match.name }}"
+              disabled
+              style="opacity:0.7"
+            >
+          </div>
+
+
+          <button
+            type="submit"
+            id="generate-link-submit"
+            class="btn btn-primary btn-block"
+          >
+            Run this account (1 credit)
+          </button>
+
+        </form>
+
+
+        <div id="generate-link-result" class="hidden mt-4"></div>
+
+
+        <p class="text-xs mt-4" style="color:var(--muted)">
+          Your password is sent straight to the link generator and is never stored on our servers.
+        </p>
+
+      </div>
+
+
+      <div class="ticket-stub">
+        <span class="ticket-stub-label">
+          {{ club.name[:3]|upper }}
+        </span>
+      </div>
+
+    </div>
+
+
+    <!-- Bulk CSV upload -->
+    <div class="ticket-row fade-up">
+
+      <p class="eyebrow mb-2">
+        Bulk upload (CSV)
+      </p>
+
+      <p class="text-sm mb-4" style="color:var(--muted)">
+        Upload multiple accounts at once for this match - one credit is spent per account that succeeds.
+        Download the template below, fill in a row per account, and upload it here.
+      </p>
+
+
+      <a
+        href="{{ url_for('main.csv_template', slug=club.slug, match_id=match.id) }}"
+        class="btn btn-ghost mb-4"
+        download
+      >
+        Download CSV template
+      </a>
+
+
+      <form
+        id="bulk-upload-form"
+        method="POST"
+        action="{{ url_for('main.match_bulk_submit', slug=club.slug, match_id=match.id) }}"
+        enctype="multipart/form-data"
+        class="space-y-3"
+      >
+
+        <input
+          type="hidden"
+          name="csrf_token"
+          value="{{ csrf_token() }}"
+        >
+
+
+        <div class="field">
+
+          <label for="csv_file">
+            CSV file
+          </label>
+
+          <input
+            type="file"
+            id="csv_file"
+            name="csv_file"
+            accept=".csv"
+            required
+            style="
+              background:var(--surface-2);
+              border:1px solid var(--border);
+              color:var(--text);
+              padding:0.65rem 0.9rem;
+              border-radius:9px;
+              font-size:0.9rem;
+              width:100%;
+            "
+          >
+
+        </div>
+
+
+        <button
+          type="submit"
+          id="bulk-upload-submit"
+          class="btn btn-primary btn-block"
+        >
+          Upload &amp; run (1 credit per account)
+        </button>
+
+      </form>
+
+    </div>
+
+  </div>
+
+
+  <!-- Balance -->
+  <div class="ticket-row">
+
+    <p class="eyebrow mb-3">
+      Your balance
+    </p>
+
+    <div class="flex items-end gap-2">
+
+      <span
+        class="credit-counter"
+        style="font-size:2.2rem"
+        data-counter
+        data-value="{{ current_user.credits }}"
+      >
+        0
+      </span>
+
+      <span class="unit">
+        credits
+      </span>
+
+    </div>
+
+
+    <a
+      href="{{ url_for('billing.buy_credits_page') }}"
+      class="btn btn-ghost btn-block mt-4"
+    >
+      Buy more credits
+    </a>
+
+  </div>
+
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script src="{{ url_for('static', filename='js/generate_link.js') }}"></script>
+
+{% endblock %}

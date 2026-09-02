@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Create your account - Tixlinx{% endblock %}
+{% block content %}
+
+<div class="max-w-md mx-auto">
+  <p class="eyebrow mb-3">Boarding pass &middot; New customer</p>
+  <h1 class="display text-3xl mb-2">Create your account</h1>
+  <p class="text-sm mb-8" style="color:var(--muted)">
+    Every registration is reviewed before it's activated - once you submit this, we'll email
+    <span class="mono" style="color:var(--accent-2)">{{ admin_email }}</span> with your details for approval.
+  </p>
+
+  <form method="POST" class="ticket fade-up">
+    <div class="ticket-body space-y-4">
+      {{ form.hidden_tag() }}
+
+      <div class="field">
+        {{ form.name.label }}
+        {{ form.name(placeholder="Jane Smith") }}
+        {% for error in form.name.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </div>
+
+      <div class="field">
+        {{ form.email.label }}
+        {{ form.email(placeholder="jane@example.com") }}
+        {% for error in form.email.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </div>
+
+      <div class="field">
+        {{ form.phone.label }}
+        {{ form.phone(placeholder="+44 7700 900000") }}
+        {% for error in form.phone.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </div>
+
+      <div class="field">
+        {{ form.password.label }}
+        {{ form.password(placeholder="At least 8 characters") }}
+        {% for error in form.password.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </div>
+
+      <div class="field">
+        {{ form.confirm_password.label }}
+        {{ form.confirm_password(placeholder="Repeat your password") }}
+        {% for error in form.confirm_password.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </div>
+
+      {{ form.submit(class="btn btn-primary btn-block") }}
+
+      <p class="text-sm text-center" style="color:var(--muted)">
+        Already have an account? <a href="{{ url_for('auth.login') }}" style="color:var(--accent-2)">Log in</a>
+      </p>
+    </div>
+    <div class="ticket-stub">
+      <span class="ticket-stub-label">Pending</span>
+    </div>
+  </form>
+</div>
+
+{% endblock %}

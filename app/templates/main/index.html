@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Tixlinx - buy credits, generate ticket links{% endblock %}
+{% block content %}
+
+<section class="hero-grid rounded-3xl px-6 py-16 md:py-24 mb-14" style="border:1px solid var(--border)">
+  <div class="max-w-2xl">
+    <p class="eyebrow mb-4">Admit One &middot; Automated</p>
+    <h1 class="display text-5xl md:text-6xl mb-6">Your credits.<br>Your ticket links.<br><span style="color:var(--accent)">On demand.</span></h1>
+    <p class="text-lg mb-8" style="color:var(--muted);max-width:38ch">
+      Top up your balance, spend one credit per generated link, and only pay for the links that actually work. GBP&nbsp;1 = 1 credit.
+    </p>
+    <div class="flex flex-wrap gap-3">
+      <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Create your account</a>
+      <a href="{{ url_for('auth.login') }}" class="btn btn-ghost">I already have one</a>
+    </div>
+  </div>
+</section>
+
+<section class="grid md:grid-cols-3 gap-5 mb-6">
+  <div class="ticket-row fade-up">
+    <p class="eyebrow mb-2">01 &middot; Register</p>
+    <p style="color:var(--muted)" class="text-sm">Create an account with your details. Every new signup is reviewed by our team before it goes live.</p>
+  </div>
+  <div class="ticket-row fade-up">
+    <p class="eyebrow mb-2">02 &middot; Get approved</p>
+    <p style="color:var(--muted)" class="text-sm">We confirm your registration by email, then you're free to log in and top up your balance.</p>
+  </div>
+  <div class="ticket-row fade-up">
+    <p class="eyebrow mb-2">03 &middot; Generate links</p>
+    <p style="color:var(--muted)" class="text-sm">Each successful link generation spends exactly one credit. Failed attempts never cost you anything.</p>
+  </div>
+</section>
+
+{% endblock %}

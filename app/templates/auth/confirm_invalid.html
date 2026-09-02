@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Link no longer valid - Tixlinx{% endblock %}
+{% block content %}
+
+<div class="max-w-md mx-auto text-center">
+  <div class="ticket fade-up">
+    <div class="ticket-body">
+      <p class="eyebrow mb-3" style="color:var(--danger)">Status: expired</p>
+      <h1 class="display text-3xl mb-4">This confirmation link isn't valid</h1>
+      <p class="text-sm" style="color:var(--muted)">
+        It may have already been used, or it expired. Registration links are valid for
+        {{ config.REGISTRATION_TOKEN_EXPIRY_DAYS if config is defined else 7 }} days.
+      </p>
+    </div>
+    <div class="ticket-stub">
+      <span class="ticket-stub-label">Void</span>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
