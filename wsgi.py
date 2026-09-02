@@ -96,6 +96,66 @@ def seed_db():
         print("Database seeded successfully.")
 
 
+@app.cli.command("add-manutd-fixtures")
+def add_manutd_fixtures():
+    """Add Manchester United's 2026/27 season HOME fixtures (all competitions,
+    Old Trafford only - away games aren't sold through this platform) as
+    upcoming matches. Safe to re-run - skips any fixture already present for
+    the same opponent/kickoff. Times are UK local, converted from the US
+    broadcast times published by ESPN.
+    Run with: flask --app wsgi.py add-manutd-fixtures"""
+    # (away_team, kickoff_at) - home_team is always Manchester United
+    home_fixtures = [
+        ("Everton", datetime(2026, 9, 6, 14, 0)),
+        ("Brighton & Hove Albion", datetime(2026, 9, 16, 20, 0)),
+        ("Tottenham Hotspur", datetime(2026, 10, 10, 17, 30)),
+        ("AFC Bournemouth", datetime(2026, 10, 25, 15, 0)),
+        ("AS Roma", datetime(2026, 11, 3, 20, 0)),
+        ("Aston Villa", datetime(2026, 11, 7, 15, 0)),
+        ("Brentford", datetime(2026, 11, 28, 15, 0)),
+        ("Coventry City", datetime(2026, 12, 5, 15, 0)),
+        ("RB Leipzig", datetime(2026, 12, 8, 20, 0)),
+        ("Nottingham Forest", datetime(2026, 12, 26, 15, 0)),
+        ("Sunderland", datetime(2026, 12, 30, 20, 0)),
+        ("Newcastle United", datetime(2027, 1, 6, 20, 0)),
+        ("Bayern Munich", datetime(2027, 1, 20, 20, 0)),
+        ("Liverpool", datetime(2027, 1, 23, 15, 0)),
+        ("Chelsea", datetime(2027, 2, 6, 15, 0)),
+        ("Brighton & Hove Albion", datetime(2027, 2, 10, 20, 0)),
+        ("Arsenal", datetime(2027, 2, 27, 15, 0)),
+        ("Everton", datetime(2027, 3, 13, 15, 0)),
+        ("Hull City", datetime(2027, 4, 10, 15, 0)),
+        ("Crystal Palace", datetime(2027, 4, 24, 15, 0)),
+        ("Leeds United", datetime(2027, 5, 15, 15, 0)),
+        ("Fulham", datetime(2027, 5, 30, 16, 0)),
+    ]
+    fixtures = [("Manchester United", away_team, kickoff_at) for away_team, kickoff_at in home_fixtures]
+
+    with app.app_context():
+        existing = {
+            (m.home_team, m.away_team, m.kickoff_at)
+            for m in Match.query.filter_by(club_slug="man-utd").all()
+        }
+
+        added = 0
+        for home_team, away_team, kickoff_at in fixtures:
+            if (home_team, away_team, kickoff_at) in existing:
+                continue
+            db.session.add(
+                Match(
+                    club_slug="man-utd",
+                    home_team=home_team,
+                    away_team=away_team,
+                    kickoff_at=kickoff_at,
+                    is_active=True,
+                )
+            )
+            added += 1
+
+        db.session.commit()
+        print(f"Added {added} fixture(s). {len(fixtures) - added} already existed and were skipped.")
+
+
 if __name__ == "__main__":
     debug = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
     app.run(debug=debug, port=int(os.environ.get("PORT", 3001)))

@@ -80,23 +80,20 @@ def call_link_generation_api(payload: dict, app_config) -> LinkGenResult:
         data = response.json()
     except ValueError:
         data = {"raw_text": response.text}
-    if response.status_code==200:
-        mydata=response.json().get('events','')
+
+    if response.status_code == 200:
+        mydata = data.get("events", "")
         if not mydata:
-            return LinkGenResult(False, None, {"error": "No events found in response"})
-        else:
-            for x in mydata:
-                indevent=mydata[x]
-                if payload.get('match_name')==indevent.get('eventname') and payload.get('email')==indevent.get('supporterid'):
-                    link=indevent.get('nfc')
-                    match_name=indevent.get('eventname')
-                    event_date_d=indevent.get('eventdate')
-                    event_date = datetime.strptime(
-                                event_date_d,
-                                "%d/%m/%Y %H:%M"
-                            )
-                    return LinkGenResult(True, link, data, match_name=match_name, event_date=event_date)
-                else:
-                    return LinkGenResult(False, None, {"error": "No matching event found in response"})
+            upstream_error = data.get("error") or "No events found in response"
+            return LinkGenResult(False, None, {"error": upstream_error, "message": upstream_error})
+
+        for indevent in mydata.values():
+            if payload.get("match_name") == indevent.get("eventname") and payload.get("email") == indevent.get("supporterid"):
+                link = indevent.get("nfc")
+                match_name = indevent.get("eventname")
+                event_date = datetime.strptime(indevent.get("eventdate"), "%d/%m/%Y %H:%M")
+                return LinkGenResult(True, link, data, match_name=match_name, event_date=event_date)
+
+        return LinkGenResult(False, None, {"error": "No matching event found in response"})
 
     return LinkGenResult(False, None, {"status_code": response.status_code, "body": data})

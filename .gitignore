@@ -5,3 +5,7 @@ __pycache__/
 instance/
 *.db
 .DS_Store
+
+# Standalone link-generation service: contains a hardcoded proxy
+# credential and account-automation logic that shouldn't go to GitHub.
+linkgen_service/
