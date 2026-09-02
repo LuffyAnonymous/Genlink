@@ -16,7 +16,7 @@ auth_bp = Blueprint("auth", __name__)
 @auth_bp.route("/register", methods=["GET", "POST"])
 def register():
     if current_user.is_authenticated:
-        return redirect(url_for("main.dashboard"))
+        return redirect(url_for("main.ticket_manager"))
 
     form = RegistrationForm()
     if form.validate_on_submit():
@@ -90,7 +90,7 @@ def confirm_registration(token):
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for("main.dashboard"))
+        return redirect(url_for("main.ticket_manager"))
 
     form = LoginForm()
     if form.validate_on_submit():
@@ -107,7 +107,7 @@ def login():
             )
         else:
             login_user(user)
-            return redirect(url_for("main.dashboard"))
+            return redirect(url_for("main.ticket_manager"))
 
     return render_template("auth/login.html", form=form)
 

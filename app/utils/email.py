@@ -53,6 +53,6 @@ def send_user_credits_added_email(user, transfer):
         "emails/user_credits_added.html",
         user=user,
         transfer=transfer,
-        dashboard_url=current_app.config["APP_BASE_URL"] + "/dashboard",
+        account_url=current_app.config["APP_BASE_URL"] + "/account",
     )
     mail.send(msg)

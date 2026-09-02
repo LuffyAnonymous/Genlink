@@ -261,17 +261,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
       } else {
 
-        resultBox.innerHTML = `
-          <div class="flash flash-error">
-            ${
-              escapeHtml(
-                data.message ||
-                data.error ||
-                "That attempt failed. No credit was charged."
-              )
-            }
-          </div>
-        `;
+        resultBox.classList.add("hidden");
+        resultBox.innerHTML = "";
+
+        showToast(
+          data.message ||
+            data.error ||
+            "That attempt failed. No credit was charged.",
+          "error"
+        );
 
       }
 
@@ -280,11 +278,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       console.error("Generate link error:", err);
 
-      resultBox.innerHTML = `
-        <div class="flash flash-error">
-          Network error - no credit was charged.
-        </div>
-      `;
+      resultBox.classList.add("hidden");
+      resultBox.innerHTML = "";
+
+      showToast("Network error - no credit was charged.", "error");
 
     } finally {
 

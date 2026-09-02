@@ -118,7 +118,7 @@ class Match(db.Model):
 
 class GeneratedTicket(db.Model):
     """A successfully generated ticket link, kept so it can be shown again
-    on the dashboard and so re-submitting the same account for the same
+    on the account page and so re-submitting the same account for the same
     match doesn't spend a second credit."""
 
     __tablename__ = "generated_tickets"

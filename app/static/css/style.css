@@ -51,9 +51,48 @@
   --radius-md: 8px;
   --radius-lg: 14px;
 
+  /* Fixed, non-theme-dependent tokens - these decorative panels (the
+     docket's ink tab, the auth brand panel) stay the same dark navy in
+     both themes rather than following --ink/--accent-2, which flip
+     meaning between light and dark mode. */
+  --ink-panel: #12161a;
+  --brand-panel: #1b3a9c;
+
+  --nav-bg: rgba(243, 245, 246, 0.92);
+
   --font-display: "Fraunces", "Iowan Old Style", Georgia, serif;
   --font-body: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+}
+
+/* ---------- Dark theme ----------
+   Toggled via [data-theme] on <html>, set by theme_toggle.js and
+   persisted in localStorage. Not just inverted grays: neutrals keep a
+   cool tint, and the accent/success/danger hues are re-tuned for
+   contrast and saturation against a dark ground rather than reused
+   as-is from the light palette. */
+:root[data-theme="dark"] {
+  --paper: #15181c;
+  --paper-raised: #1d2126;
+  --paper-sunken: #101316;
+  --ink: #eceef1;
+  --ink-soft: #a7afb8;
+  --ink-faint: #737b84;
+  --line: #2a2f35;
+  --line-strong: #3c434b;
+
+  --accent-100: #1c2b4d;
+  --accent-300: #7fa2ee;
+  --accent: #5b85ea;
+  --accent-2: #8fb0f5;
+  --accent-700: #dbe6fb;
+
+  --success: #3fbe83;
+  --success-tint: #163224;
+  --danger: #e2694c;
+  --danger-tint: #3a1912;
+
+  --nav-bg: rgba(21, 24, 28, 0.88);
 }
 
 * {
@@ -66,16 +105,6 @@ body {
   color: var(--ink);
   font-family: var(--font-body);
   min-height: 100%;
-}
-
-body {
-  background-image: repeating-linear-gradient(
-    to bottom,
-    rgba(18, 22, 26, 0.028) 0px,
-    rgba(18, 22, 26, 0.028) 1px,
-    transparent 1px,
-    transparent 32px
-  );
 }
 
 ::selection {
@@ -119,11 +148,31 @@ input:focus-visible,
 /* ---------- Nav ---------- */
 .nav {
   border-bottom: 1px solid var(--line);
-  background: rgba(243, 245, 246, 0.92);
+  background: var(--nav-bg);
   backdrop-filter: blur(8px);
   position: sticky;
   top: 0;
   z-index: 40;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.theme-toggle:hover {
+  color: var(--ink);
+  border-color: var(--line-strong);
 }
 
 .nav-logo {
@@ -165,8 +214,7 @@ input:focus-visible,
 }
 
 .btn-primary:hover {
-  background: var(--accent-2);
-  border-color: var(--accent-2);
+  filter: brightness(1.12);
 }
 
 .btn-primary:disabled {
@@ -233,6 +281,56 @@ input:focus-visible,
   margin-top: 0.35rem;
 }
 
+/* ---------- Generator textarea (paste multiple accounts) ---------- */
+.gen-textarea {
+  width: 100%;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  padding: 0.7rem 0.85rem;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  resize: vertical;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.gen-textarea::placeholder {
+  color: var(--ink-faint);
+  font-family: var(--font-body);
+}
+
+.gen-textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-100);
+}
+
+.gen-disclosure {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.gen-disclosure:hover {
+  color: var(--ink);
+}
+
+.gen-disclosure-arrow {
+  font-size: 10px;
+  display: inline-block;
+}
+
 /* ---------- Flash messages ---------- */
 .flash {
   border-radius: var(--radius-sm);
@@ -247,14 +345,126 @@ input:focus-visible,
   background: var(--danger-tint);
   border-color: rgba(193, 67, 43, 0.3);
   border-left-color: var(--danger);
-  color: #7a2c1c;
+  color: var(--danger);
 }
 
 .flash-success {
   background: var(--success-tint);
   border-color: rgba(27, 138, 90, 0.3);
   border-left-color: var(--success);
-  color: #145a3c;
+  color: var(--success);
+}
+
+/* ---------- Toasts ---------- */
+.toast-stack {
+  position: fixed;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  max-width: min(22rem, calc(100vw - 2.5rem));
+}
+
+.toast {
+  padding: 0.8rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line-strong);
+  background: var(--paper-raised);
+  color: var(--ink);
+  font-size: 0.88rem;
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.3);
+  animation: toastIn 0.25s ease both;
+}
+
+.toast.is-error {
+  background: var(--danger-tint);
+  border-color: rgba(193, 67, 43, 0.3);
+  border-left-color: var(--danger);
+  color: var(--danger);
+}
+
+.toast.is-success {
+  background: var(--success-tint);
+  border-color: rgba(27, 138, 90, 0.3);
+  border-left-color: var(--success);
+  color: var(--success);
+}
+
+.toast.is-leaving {
+  animation: toastOut 0.2s ease both;
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes toastOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast,
+  .toast.is-leaving {
+    animation: none;
+  }
+}
+
+/* ---------- Settings rows (Account page) ---------- */
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+
+.settings-row + .settings-row {
+  margin-top: 1rem;
+}
+
+.setting-title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--ink);
+}
+
+.setting-value {
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.setting-description {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  margin-top: 0.35rem;
+  max-width: 48ch;
 }
 
 /* ============================================================
@@ -284,7 +494,7 @@ input:focus-visible,
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--ink);
+  background: var(--ink-panel);
   border-left: 1px solid var(--line);
 }
 
@@ -453,7 +663,7 @@ input:focus-visible,
 
 .auth-panel-brand {
   flex: 1 1 44%;
-  background: var(--accent-2);
+  background: var(--brand-panel);
   color: #fff;
   display: flex;
   align-items: center;

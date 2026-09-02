@@ -1,11 +1,10 @@
 import io
-import json
 from datetime import datetime
 from app.clubs import CLUBS, get_club
 from app.extensions import db
 from app.services.link_jobs import run_link_job
 from flask_login import login_required, current_user
-from app.models import CreditTransaction, LinkGenerationLog, Match, GeneratedTicket
+from app.models import CreditTransaction, Match, GeneratedTicket
 from app.utils.csv_tools import generate_template_csv, parse_accounts_csv, CsvValidationError
 from flask import Blueprint, render_template, redirect, url_for, abort, request, flash, Response, current_app
 
@@ -17,33 +16,19 @@ main_bp = Blueprint("main", __name__)
 @main_bp.route("/")
 def index():
     if current_user.is_authenticated:
-        return redirect(url_for("main.dashboard"))
+        return redirect(url_for("main.ticket_manager"))
     return render_template("main/index.html")
 
 
-@main_bp.route("/dashboard")
+@main_bp.route("/account")
 @login_required
-def dashboard():
+def account():
     transactions = (
         CreditTransaction.query.filter_by(user_id=current_user.id)
         .order_by(CreditTransaction.created_at.desc())
         .limit(10)
         .all()
     )
-    links = (
-        LinkGenerationLog.query.filter_by(user_id=current_user.id)
-        .order_by(LinkGenerationLog.created_at.desc())
-        .limit(5)
-        .all()
-    )
-    # request_payload is stored as a JSON string - parse it here so the
-    # template can read .email / .match_name directly instead of getting
-    # Undefined back from attribute access on a plain string.
-    for link in links:
-        try:
-            link.payload_data = json.loads(link.request_payload) if link.request_payload else {}
-        except (TypeError, ValueError):
-            link.payload_data = {}
 
     now = datetime.utcnow()
     all_tickets = (
@@ -64,9 +49,8 @@ def dashboard():
     previous_tickets.sort(key=lambda t: t.event_date, reverse=True)
 
     return render_template(
-        "main/dashboard.html",
+        "main/account.html",
         transactions=transactions,
-        links=links,
         upcoming_tickets=upcoming_tickets,
         previous_tickets=previous_tickets,
     )
