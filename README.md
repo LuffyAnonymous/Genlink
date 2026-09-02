@@ -1,8 +1,8 @@
-# Tixlinx
+# Genlinklab
 
 A customer portal built with Flask:
 
-- Customer registration that requires **manual approval by email** (`admin@ticketsshop.co.uk`) before the account can log in
+- Customer registration that requires **manual approval by email** (`admin@genlinklab.co.uk`) before the account can log in
 - **PostgreSQL** via SQLAlchemy
 - **Bank transfer** to buy credits, GBP 1 = 1 credit, with admin manually confirming receipt by email before credits are added
 - A `/api/generate-link` endpoint that only spends a credit when your link-generation API call **succeeds**
@@ -31,7 +31,7 @@ Then fill in `.env`:
 | `SECRET_KEY` | Flask session signing - generate with `python -c "import secrets; print(secrets.token_hex(32))"` |
 | `DATABASE_URL` | Your PostgreSQL connection string |
 | `MAIL_SERVER` / `MAIL_PORT` / `MAIL_USERNAME` / `MAIL_PASSWORD` | SMTP credentials for the mailbox that sends the admin notification + welcome email. Defaults are set for Office 365 - change if you use Gmail, SES, etc. |
-| `ADMIN_EMAIL` | Where new-registration and bank-transfer emails go (defaults to `admin@ticketsshop.co.uk`) |
+| `ADMIN_EMAIL` | Where new-registration and bank-transfer emails go (defaults to `admin@genlinklab.co.uk`) |
 | `BANK_ACCOUNT_NUMBER` / `BANK_IBAN` / `BANK_CURRENCY` / `BANK_BIC_SWIFT` | Your bank details, shown to customers on the buy-credits page |
 | `LINKGEN_API_URL` / `LINKGEN_API_KEY` | Your existing link-generation API |
 
@@ -82,7 +82,7 @@ gunicorn -w 4 -b 0.0.0.0:8000 wsgi:app
 
 ## Security notes worth knowing about
 
-- Passwords are hashed with Werkzeug's `generate_password_hash` (PBKDF2) for Tixlinx's own login system.
+- Passwords are hashed with Werkzeug's `generate_password_hash` (PBKDF2) for Genlinklab's own login system.
 - **Ticketing account passwords** submitted via the single-account form or CSV upload (for your automation bot) are *never written to the database or to logs* - they're forwarded straight to your link generation API and redacted (`***redacted***`) before anything is persisted. If you later need to reuse a saved account's credentials rather than just its resulting ticket link, you'd need to add encryption-at-rest (e.g. Fernet with a key held outside the database) - that isn't included here since the current design avoids storing them at all.
 - CSV uploads are capped at 200 rows and 2MB per request (`MAX_CONTENT_LENGTH` in `app/config.py`) to avoid very long-running requests - raise these if you need bigger batches, but consider moving bulk processing to a background job/queue (Celery, RQ) rather than a synchronous request once batches get large.
 - CSRF protection (Flask-WTF) is on globally.

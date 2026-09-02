@@ -26,14 +26,14 @@ class Config:
     MAIL_USE_TLS = _env_bool("MAIL_USE_TLS", False)
     MAIL_USE_SSL = _env_bool("MAIL_USE_SSL", True)
 
-    MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "admin@ticketsshop.co.uk")
+    MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "admin@genlinklab.co.uk")
     MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
 
-    MAIL_DEFAULT_SENDER = os.environ.get("MAIL_DEFAULT_SENDER", "Tixlinx <admin@ticketsshop.co.uk>")
+    MAIL_DEFAULT_SENDER = os.environ.get("MAIL_DEFAULT_SENDER", "Genlinklab <admin@genlinklab.co.uk>")
 
     MAIL_SUPPRESS_SEND = _env_bool("MAIL_SUPPRESS_SEND", False)
 
-    ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@ticketsshop.co.uk")
+    ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@genlinklab.co.uk")
     REGISTRATION_TOKEN_EXPIRY_DAYS = int(os.environ.get("REGISTRATION_TOKEN_EXPIRY_DAYS", 7))
 
     # --- Bank transfer (manual) ---

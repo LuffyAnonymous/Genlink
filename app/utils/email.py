@@ -4,10 +4,10 @@ from app.extensions import mail
 
 
 def send_admin_registration_email(user, confirm_url):
-    """Sent to admin@ticketsshop.co.uk (or ADMIN_EMAIL) with the new
+    """Sent to admin@genlinklab.co.uk (or ADMIN_EMAIL) with the new
     customer's details and a one-click link to approve the account."""
     msg = Message(
-        subject=f"New Tixlinx registration - {user.name}",
+        subject=f"New Genlinklab registration - {user.name}",
         recipients=[current_app.config["ADMIN_EMAIL"]],
     )
     msg.html = render_template(
@@ -19,7 +19,7 @@ def send_admin_registration_email(user, confirm_url):
 def send_user_welcome_email(user):
     """Sent to the customer once the admin has approved their account."""
     msg = Message(
-        subject="Your Tixlinx account is approved",
+        subject="Your Genlinklab account is approved",
         recipients=[user.email],
     )
     msg.html = render_template(
@@ -29,7 +29,7 @@ def send_user_welcome_email(user):
 
 
 def send_admin_bank_transfer_email(user, transfer, confirm_url):
-    """Sent to admin@ticketsshop.co.uk when a customer declares they're
+    """Sent to admin@genlinklab.co.uk when a customer declares they're
     sending a bank transfer, with a one-click link to confirm receipt and
     credit the account."""
     msg = Message(
@@ -46,7 +46,7 @@ def send_user_credits_added_email(user, transfer):
     """Sent to the customer once the admin has confirmed their bank transfer
     arrived and credited their account."""
     msg = Message(
-        subject="Your Tixlinx credits have been added",
+        subject="Your Genlinklab credits have been added",
         recipients=[user.email],
     )
     msg.html = render_template(

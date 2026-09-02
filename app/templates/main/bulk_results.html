@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Bulk results - {{ match.name }} - Tixlinx{% endblock %}
+{% block title %}Bulk results - {{ match.name }} - Genlinklab{% endblock %}
 
 {% block content %}
 
@@ -58,7 +58,7 @@
   {% for r in results %}
 
     <div
-      class="ticket-row flex items-center justify-between"
+      class="ticket-row {{ 'is-ok' if r.success else 'is-fail' }} flex items-center justify-between"
       data-success="{{ 'true' if r.success else 'false' }}"
       data-email="{{ r.email or '' }}"
       data-link="{{ r.link or '' }}"
@@ -119,11 +119,8 @@
       </div>
 
 
-      <span
-        class="text-sm flex-shrink-0 ml-4"
-        style="color: {{ 'var(--success)' if r.success else 'var(--danger)' }}"
-      >
-        {{ 'Success' if r.success else 'Failed' }}
+      <span class="manifest-code flex-shrink-0 ml-4 {{ 'ok' if r.success else 'fail' }}">
+        {{ '[OK]' if r.success else '[FAIL]' }}
       </span>
 
     </div>

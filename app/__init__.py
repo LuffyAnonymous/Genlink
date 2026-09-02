@@ -10,7 +10,7 @@ def create_app(config_class=Config):
 
     # Behind a reverse proxy (nginx terminating TLS in front of gunicorn),
     # Flask otherwise has no way to know the original request was HTTPS on
-    # www.tixlinx.com - url_for(_external=True) would build http:// links
+    # www.genlinklab.com - url_for(_external=True) would build http:// links
     # pointing at the internal host/port instead.
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 

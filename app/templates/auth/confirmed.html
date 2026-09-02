@@ -1,21 +1,17 @@
 {% extends "base.html" %}
-{% block title %}Account approved - Tixlinx{% endblock %}
+{% block title %}Account approved - Genlinklab{% endblock %}
 {% block content %}
 
 <div class="max-w-md mx-auto text-center">
-  <div class="ticket fade-up">
-    <div class="ticket-body">
-      <p class="eyebrow mb-3" style="color:var(--success)">Status: approved</p>
-      <h1 class="display text-3xl mb-4">{{ user.name }} is confirmed</h1>
-      <p class="text-sm mb-2" style="color:var(--muted)">{{ user.email }}</p>
-      <p class="text-sm mb-6" style="color:var(--muted)">
-        This account can now log in. We've sent {{ user.name.split(' ')[0] }} a welcome email with next steps.
-      </p>
-    </div>
-    <div class="ticket-stub">
-      <span class="ticket-stub-label">Admit</span>
-    </div>
+  <div class="stamp is-success">
+    <span class="stamp-label">Approved</span>
   </div>
+  <p class="eyebrow mb-3" style="color:var(--success)">Status: approved</p>
+  <h1 class="display text-3xl mb-4">{{ user.name }} is confirmed</h1>
+  <p class="text-sm mb-2" style="color:var(--muted)">{{ user.email }}</p>
+  <p class="text-sm mb-6" style="color:var(--muted)">
+    This account can now log in. We've sent {{ user.name.split(' ')[0] }} a welcome email with next steps.
+  </p>
 </div>
 
 {% endblock %}

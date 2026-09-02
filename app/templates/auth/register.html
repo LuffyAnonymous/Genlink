@@ -1,59 +1,87 @@
-{% extends "base.html" %}
-{% block title %}Create your account - Tixlinx{% endblock %}
-{% block content %}
+{% extends "_split_base.html" %}
+{% block title %}Create your account - Genlinklab{% endblock %}
 
-<div class="max-w-md mx-auto">
-  <p class="eyebrow mb-3">Boarding pass &middot; New customer</p>
+{% block brand_content %}
+  <p class="eyebrow mb-4" style="color:rgba(255,255,255,0.7)">Credit ledger &middot; link generator</p>
+  <h1 class="display text-4xl mb-5" style="color:#fff">One credit in.<br>One working link out.</h1>
+  <p class="text-base" style="color:rgba(255,255,255,0.78); max-width:36ch">
+    Every account is reviewed by hand before it can buy credits or generate a link. Nothing here is self-approved.
+  </p>
+{% endblock %}
+
+{% block form_content %}
+  <p class="eyebrow mb-2">New account &middot; manual review</p>
   <h1 class="display text-3xl mb-2">Create your account</h1>
-  <p class="text-sm mb-8" style="color:var(--muted)">
-    Every registration is reviewed before it's activated - once you submit this, we'll email
+  <p class="text-sm mb-6" style="color:var(--muted)">
+    Once you submit this, we'll email
     <span class="mono" style="color:var(--accent-2)">{{ admin_email }}</span> with your details for approval.
   </p>
 
-  <form method="POST" class="ticket fade-up">
-    <div class="ticket-body space-y-4">
-      {{ form.hidden_tag() }}
+  <form method="POST" class="space-y-5">
+    {{ form.hidden_tag() }}
 
-      <div class="field">
-        {{ form.name.label }}
-        {{ form.name(placeholder="Jane Smith") }}
-        {% for error in form.name.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
-      </div>
+    <div class="field">
+      {{ form.name.label }}
+      {{ form.name(placeholder="Jane Smith") }}
+      {% for error in form.name.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
 
-      <div class="field">
-        {{ form.email.label }}
+    <div class="field">
+      {{ form.email.label }}
+      <div class="input-icon-wrap">
+        <svg class="field-icon-mark" width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <path d="M3 6.5A2.5 2.5 0 0 1 5.5 4h13A2.5 2.5 0 0 1 21 6.5v11A2.5 2.5 0 0 1 18.5 20h-13A2.5 2.5 0 0 1 3 17.5v-11Z" stroke="currentColor" stroke-width="1.6"/>
+          <path d="m4 6.5 8 6.5 8-6.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
         {{ form.email(placeholder="jane@example.com") }}
-        {% for error in form.email.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
       </div>
+      {% for error in form.email.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
 
-      <div class="field">
-        {{ form.phone.label }}
-        {{ form.phone(placeholder="+44 7700 900000") }}
-        {% for error in form.phone.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
-      </div>
+    <div class="field">
+      {{ form.phone.label }}
+      {{ form.phone(placeholder="+44 7700 900000") }}
+      {% for error in form.phone.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
 
-      <div class="field">
-        {{ form.password.label }}
+    <div class="field">
+      {{ form.password.label }}
+      <div class="input-icon-wrap has-toggle">
+        <svg class="field-icon-mark" width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <rect x="4.5" y="10.5" width="15" height="9.5" rx="2" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M7.5 10.5V7.75a4.5 4.5 0 0 1 9 0v2.75" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
         {{ form.password(placeholder="At least 8 characters") }}
-        {% for error in form.password.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        <button type="button" class="password-toggle" data-target="password" aria-label="Show password">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/></svg>
+        </button>
       </div>
+      {% for error in form.password.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
 
-      <div class="field">
-        {{ form.confirm_password.label }}
+    <div class="field">
+      {{ form.confirm_password.label }}
+      <div class="input-icon-wrap has-toggle">
+        <svg class="field-icon-mark" width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <rect x="4.5" y="10.5" width="15" height="9.5" rx="2" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M7.5 10.5V7.75a4.5 4.5 0 0 1 9 0v2.75" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
         {{ form.confirm_password(placeholder="Repeat your password") }}
-        {% for error in form.confirm_password.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        <button type="button" class="password-toggle" data-target="confirm_password" aria-label="Show password">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/></svg>
+        </button>
       </div>
-
-      {{ form.submit(class="btn btn-primary btn-block") }}
-
-      <p class="text-sm text-center" style="color:var(--muted)">
-        Already have an account? <a href="{{ url_for('auth.login') }}" style="color:var(--accent-2)">Log in</a>
-      </p>
+      {% for error in form.confirm_password.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
     </div>
-    <div class="ticket-stub">
-      <span class="ticket-stub-label">Pending</span>
-    </div>
+
+    {{ form.submit(class="btn btn-primary btn-block") }}
   </form>
-</div>
 
+  <p class="text-sm text-center mt-6" style="color:var(--muted)">
+    Already have an account? <a href="{{ url_for('auth.login') }}" style="color:var(--accent-2)">Log in</a>
+  </p>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/password_toggle.js') }}"></script>
 {% endblock %}

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Dashboard - Tixlinx{% endblock %}
+{% block title %}Dashboard - Genlinklab{% endblock %}
 
 {% block content %}
 
@@ -12,13 +12,13 @@
 <!-- Balance / Ticket Manager -->
 <div class="grid md:grid-cols-3 gap-6 mb-10">
 
-  <div class="md:col-span-2 ticket fade-up">
+  <div class="md:col-span-2 docket fade-up">
 
-    <div class="ticket-body">
+    <div class="docket-body">
 
       <p class="eyebrow mb-3">Balance</p>
 
-      <div class="flex items-end gap-2 mb-4">
+      <div class="flex items-end gap-2 mb-1">
 
         <span
           class="credit-counter"
@@ -32,11 +32,7 @@
 
       </div>
 
-      <div class="barcode mb-4">
-        {% for i in range(48) %}
-          <span style="height:{{ (10 + (i * 37) % 16) }}px"></span>
-        {% endfor %}
-      </div>
+      <p class="mono text-xs mb-4" style="color:var(--ink-faint)">1 credit = &pound;1.00 &middot; spent only on a successful link</p>
 
       <a
         href="{{ url_for('billing.buy_credits_page') }}"
@@ -47,8 +43,8 @@
 
     </div>
 
-    <div class="ticket-stub">
-      <span class="ticket-stub-label">Balance</span>
+    <div class="docket-tab">
+      <span class="docket-tab-label">Balance</span>
     </div>
 
   </div>
@@ -440,15 +436,9 @@
               class="flex items-center justify-between mb-2"
             >
 
-              <span
-                class="text-sm"
-                style="
-                  color:
-                  {{ 'var(--success)' if link.success else 'var(--danger)' }}
-                "
-              >
+              <span class="manifest-code {{ 'ok' if link.success else 'fail' }}">
 
-                {{ 'Success' if link.success else 'Failed' }}
+                {{ '[OK]' if link.success else '[FAIL]' }}
 
               </span>
 

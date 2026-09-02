@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Bank transfer details - Tixlinx{% endblock %}
+{% block title %}Bank transfer details - Genlinklab{% endblock %}
 {% block content %}
 
 <div class="max-w-md mx-auto">
-  <div class="ticket fade-up mb-6">
-    <div class="ticket-body">
+  <div class="docket fade-up mb-6">
+    <div class="docket-body">
       <p class="eyebrow mb-3">Status: awaiting payment</p>
       <h1 class="display text-2xl mb-4">Send your bank transfer</h1>
       <p class="text-sm mb-6" style="color:var(--muted)">
@@ -12,17 +12,35 @@
         below and include the payment reference so we can match it to your account. Credits are
         added once we've manually confirmed the funds have arrived - please allow some time for this.
       </p>
-      <table style="width:100%; font-size:14px; border-collapse:collapse;">
-        <tr><td style="color:var(--muted); padding:6px 0;">Account number</td><td class="mono" style="text-align:right;">{{ bank.account_number }}</td></tr>
-        <tr><td style="color:var(--muted); padding:6px 0;">IBAN</td><td class="mono" style="text-align:right;">{{ bank.iban }}</td></tr>
-        <tr><td style="color:var(--muted); padding:6px 0;">BIC / SWIFT</td><td class="mono" style="text-align:right;">{{ bank.bic_swift }}</td></tr>
-        <tr><td style="color:var(--muted); padding:6px 0;">Currency</td><td class="mono" style="text-align:right;">{{ bank.currency }}</td></tr>
-        <tr><td style="color:var(--muted); padding:6px 0;">Amount</td><td class="mono" style="text-align:right;">&pound;{{ transfer.credits }}.00</td></tr>
-        <tr><td style="color:var(--muted); padding:6px 0;">Payment reference</td><td class="mono" style="text-align:right;">{{ transfer.reference }}</td></tr>
-      </table>
+      <div style="border-top:1px solid var(--line)">
+        <div style="padding:10px 0; border-bottom:1px solid var(--line)">
+          <p class="text-xs" style="color:var(--muted)">Account number</p>
+          <p class="mono text-sm" style="word-break:break-all">{{ bank.account_number }}</p>
+        </div>
+        <div style="padding:10px 0; border-bottom:1px solid var(--line)">
+          <p class="text-xs" style="color:var(--muted)">IBAN</p>
+          <p class="mono text-sm" style="word-break:break-all">{{ bank.iban }}</p>
+        </div>
+        <div style="padding:10px 0; border-bottom:1px solid var(--line)">
+          <p class="text-xs" style="color:var(--muted)">BIC / SWIFT</p>
+          <p class="mono text-sm" style="word-break:break-all">{{ bank.bic_swift }}</p>
+        </div>
+        <div style="padding:10px 0; border-bottom:1px solid var(--line)">
+          <p class="text-xs" style="color:var(--muted)">Currency</p>
+          <p class="mono text-sm">{{ bank.currency }}</p>
+        </div>
+        <div style="padding:10px 0; border-bottom:1px solid var(--line)">
+          <p class="text-xs" style="color:var(--muted)">Amount</p>
+          <p class="mono text-sm">&pound;{{ transfer.credits }}.00</p>
+        </div>
+        <div style="padding:10px 0">
+          <p class="text-xs" style="color:var(--muted)">Payment reference</p>
+          <p class="mono text-sm" style="word-break:break-all; color:var(--accent-2)">{{ transfer.reference }}</p>
+        </div>
+      </div>
     </div>
-    <div class="ticket-stub">
-      <span class="ticket-stub-label">Pending</span>
+    <div class="docket-tab">
+      <span class="docket-tab-label">Pending</span>
     </div>
   </div>
   <a href="{{ url_for('main.dashboard') }}" class="btn btn-ghost btn-block">Back to dashboard</a>

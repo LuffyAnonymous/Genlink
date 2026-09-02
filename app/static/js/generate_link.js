@@ -152,7 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
                   border:1px solid var(--border);
                   color:var(--accent-2);
                   padding:0.65rem 0.75rem;
-                  border-radius:9px;
+                  border-radius:4px;
                   font-size:0.85rem;
                 "
               >

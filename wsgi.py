@@ -76,11 +76,11 @@ def seed_db():
             print("Seeded sample ticket for Supporter ID 1234567.")
 
         # Seed demo user
-        demo_user = User.query.filter_by(email="demo@tixlinx.com").first()
+        demo_user = User.query.filter_by(email="demo@genlinklab.com").first()
         if not demo_user:
             demo_user = User(
                 name="Demo User",
-                email="demo@tixlinx.com",
+                email="demo@genlinklab.com",
                 phone="+44 7000 000000",
                 password_hash=generate_password_hash("password123"),
                 is_approved=True,
@@ -88,7 +88,7 @@ def seed_db():
                 credits=25,
             )
             db.session.add(demo_user)
-            print("Created demo user: demo@tixlinx.com (password: password123, credits: 25)")
+            print("Created demo user: demo@genlinklab.com (password: password123, credits: 25)")
         else:
             print("Demo user already exists.")
 

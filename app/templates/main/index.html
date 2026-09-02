@@ -1,34 +1,38 @@
-{% extends "base.html" %}
-{% block title %}Tixlinx - buy credits, generate ticket links{% endblock %}
-{% block content %}
+{% extends "_split_base.html" %}
+{% block title %}Genlinklab - buy credits, generate ticket links{% endblock %}
 
-<section class="hero-grid rounded-3xl px-6 py-16 md:py-24 mb-14" style="border:1px solid var(--border)">
-  <div class="max-w-2xl">
-    <p class="eyebrow mb-4">Admit One &middot; Automated</p>
-    <h1 class="display text-5xl md:text-6xl mb-6">Your credits.<br>Your ticket links.<br><span style="color:var(--accent)">On demand.</span></h1>
-    <p class="text-lg mb-8" style="color:var(--muted);max-width:38ch">
-      Top up your balance, spend one credit per generated link, and only pay for the links that actually work. GBP&nbsp;1 = 1 credit.
-    </p>
-    <div class="flex flex-wrap gap-3">
-      <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Create your account</a>
-      <a href="{{ url_for('auth.login') }}" class="btn btn-ghost">I already have one</a>
-    </div>
+{% block brand_content %}
+  <p class="eyebrow mb-4" style="color:rgba(255,255,255,0.7)">Credit ledger &middot; link generator</p>
+  <h1 class="display text-4xl md:text-5xl mb-5" style="color:#fff">One credit in.<br>One working link out.</h1>
+  <p class="text-base mb-8" style="color:rgba(255,255,255,0.78); max-width:36ch">
+    Top up by bank transfer, run an account against a match, and a credit is only spent the moment a link actually comes back. Failed attempts cost nothing. GBP&nbsp;1 = 1 credit.
+  </p>
+  <div class="mono text-xs space-y-1" style="color:rgba(255,255,255,0.55)">
+    <p>&gt; account 1245678 &middot; man-utd-v-ipswich</p>
+    <p style="color:#8fe0b8">&gt; link generated &middot; -1 credit &middot; balance 24</p>
+    <p>&gt; account 1245991 &middot; man-utd-v-ipswich</p>
+    <p style="color:#f3a48f">&gt; attempt failed &middot; 0 credit charged</p>
   </div>
-</section>
+{% endblock %}
 
-<section class="grid md:grid-cols-3 gap-5 mb-6">
-  <div class="ticket-row fade-up">
-    <p class="eyebrow mb-2">01 &middot; Register</p>
-    <p style="color:var(--muted)" class="text-sm">Create an account with your details. Every new signup is reviewed by our team before it goes live.</p>
-  </div>
-  <div class="ticket-row fade-up">
-    <p class="eyebrow mb-2">02 &middot; Get approved</p>
-    <p style="color:var(--muted)" class="text-sm">We confirm your registration by email, then you're free to log in and top up your balance.</p>
-  </div>
-  <div class="ticket-row fade-up">
-    <p class="eyebrow mb-2">03 &middot; Generate links</p>
-    <p style="color:var(--muted)" class="text-sm">Each successful link generation spends exactly one credit. Failed attempts never cost you anything.</p>
-  </div>
-</section>
+{% block form_content %}
+  <p class="eyebrow mb-2">Get started</p>
+  <h1 class="display text-3xl mb-4">Create an account or log in</h1>
+  <p class="text-sm mb-8" style="color:var(--muted)">
+    Every new account is reviewed by hand before it can buy credits or generate a link - nothing here is self-approved.
+  </p>
 
+  <div class="space-y-3">
+    <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-block">Create your account</a>
+    <a href="{{ url_for('auth.login') }}" class="btn btn-ghost btn-block">I already have one</a>
+  </div>
+
+  <div class="mt-10 pt-8" style="border-top:1px solid var(--line)">
+    <p class="eyebrow mb-3">How it works</p>
+    <ol class="space-y-2 text-sm" style="color:var(--muted)">
+      <li><span class="mono" style="color:var(--ink-faint)">01</span> Register, and wait for manual approval by email.</li>
+      <li><span class="mono" style="color:var(--ink-faint)">02</span> Log in and send a bank transfer to top up credits.</li>
+      <li><span class="mono" style="color:var(--ink-faint)">03</span> Run an account, or a CSV of them, against a match.</li>
+    </ol>
+  </div>
 {% endblock %}

@@ -1,20 +1,16 @@
 {% extends "base.html" %}
-{% block title %}Link no longer valid - Tixlinx{% endblock %}
+{% block title %}Link no longer valid - Genlinklab{% endblock %}
 {% block content %}
 
 <div class="max-w-md mx-auto text-center">
-  <div class="ticket fade-up">
-    <div class="ticket-body">
-      <p class="eyebrow mb-3" style="color:var(--danger)">Status: not found</p>
-      <h1 class="display text-3xl mb-4">This confirmation link isn't valid</h1>
-      <p class="text-sm" style="color:var(--muted)">
-        We couldn't find a matching bank transfer request for this link.
-      </p>
-    </div>
-    <div class="ticket-stub">
-      <span class="ticket-stub-label">Void</span>
-    </div>
+  <div class="stamp is-danger">
+    <span class="stamp-label">Void</span>
   </div>
+  <p class="eyebrow mb-3" style="color:var(--danger)">Status: not found</p>
+  <h1 class="display text-3xl mb-4">This confirmation link isn't valid</h1>
+  <p class="text-sm" style="color:var(--muted)">
+    We couldn't find a matching bank transfer request for this link.
+  </p>
 </div>
 
 {% endblock %}

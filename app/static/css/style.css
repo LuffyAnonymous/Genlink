@@ -1,32 +1,59 @@
 /* ============================================================
-   Tixlinx design system
-   Palette:  --bg #0E1220 (ink navy) / --surface #161B2E / --surface-2 #1D2340
-             --accent #F5B942 (stub gold) / --accent-2 #1FB8A6 (stamp teal)
-             --text #EDEFF7 / --muted #8890A6 / --danger #FF6B6B
-   Type:     display = 'Big Shoulders Display' (stadium signage energy)
-             body    = 'Inter'
-             mono    = 'IBM Plex Mono' (counters, transaction IDs)
-   Signature: every card is a literal ticket stub - dashed perforation +
-             semi-circle notches cut from the divider, echoing a torn
-             admission ticket.
+   Genlinklab design system — "Manifest"
+   Palette:  --paper #F3F5F6 (cool working-paper grey) / --paper-raised #FFFFFF
+             --ink #12161A (near-black, blue-cool) / --line #D7DCDE
+             --accent #2F5FE0 (wire blue — one signal color, used with restraint)
+             --success #1B8A5A (approved) / --danger #C1432B (void/failed)
+   Type:     display = 'Fraunces' (documentary/paperwork gravitas)
+             body    = 'IBM Plex Sans'
+             mono    = 'IBM Plex Mono' (references, credits, statuses)
+   Signature: the docket — every record (account, sheet, credit balance)
+             is a paper docket with a rotated tab carrying a stamped
+             status word, and every list is a manifest: a left-edge
+             rail of bracketed status codes ([OK] / [FAIL] / [WAIT]),
+             the way a shipping or build log marks each line.
    ============================================================ */
 
 :root {
-  --bg: #0e1220;
-  --bg-elevated: #0b0e19;
-  --surface: #161b2e;
-  --surface-2: #1d2340;
-  --border: rgba(237, 239, 247, 0.08);
-  --accent: #f5b942;
-  --accent-dim: #b8862c;
-  --accent-2: #1fb8a6;
-  --text: #edeff7;
-  --muted: #8890a6;
-  --danger: #ff6b6b;
-  --success: #6fd99a;
-  --font-display: "Big Shoulders Display", sans-serif;
-  --font-body: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  /* Neutrals */
+  --paper: #f3f5f6;
+  --paper-raised: #ffffff;
+  --paper-sunken: #e7eaeb;
+  --ink: #12161a;
+  --ink-soft: #4a535b;
+  --ink-faint: #7c858c;
+  --line: #d7dcde;
+  --line-strong: #b7bfc2;
+
+  /* Legacy token names kept so JS-generated markup (generate_link.js)
+     continues to resolve to the new palette without needing edits there. */
+  --bg: var(--paper);
+  --bg-elevated: var(--paper-raised);
+  --surface: var(--paper-raised);
+  --surface-2: var(--paper-sunken);
+  --border: var(--line);
+  --text: var(--ink);
+  --muted: var(--ink-soft);
+
+  /* Accent — one signal color, as a scale */
+  --accent-100: #dde6fb;
+  --accent-300: #90a9ee;
+  --accent: #2f5fe0;
+  --accent-2: #1b3a9c;
+  --accent-700: #16296e;
+
+  --success: #1b8a5a;
+  --success-tint: #e3f3ea;
+  --danger: #c1432b;
+  --danger-tint: #fbe9e4;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+
+  --font-display: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --font-body: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
 }
 
 * {
@@ -35,22 +62,25 @@
 
 html,
 body {
-  background: var(--bg);
-  color: var(--text);
+  background: var(--paper);
+  color: var(--ink);
   font-family: var(--font-body);
   min-height: 100%;
 }
 
 body {
-  background-image:
-    radial-gradient(circle at 12% 8%, rgba(31, 184, 166, 0.08), transparent 40%),
-    radial-gradient(circle at 88% 92%, rgba(245, 185, 66, 0.07), transparent 45%);
-  background-attachment: fixed;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(18, 22, 26, 0.028) 0px,
+    rgba(18, 22, 26, 0.028) 1px,
+    transparent 1px,
+    transparent 32px
+  );
 }
 
 ::selection {
   background: var(--accent);
-  color: #14161f;
+  color: #fff;
 }
 
 a {
@@ -60,9 +90,9 @@ a {
 
 h1, h2, h3, .display {
   font-family: var(--font-display);
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  line-height: 1.02;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.05;
 }
 
 .mono {
@@ -72,16 +102,25 @@ h1, h2, h3, .display {
 .eyebrow {
   font-family: var(--font-mono);
   text-transform: uppercase;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.14em;
   font-size: 0.72rem;
   color: var(--accent-2);
 }
 
+/* ---------- Focus ---------- */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+.btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 /* ---------- Nav ---------- */
 .nav {
-  border-bottom: 1px solid var(--border);
-  background: rgba(14, 18, 32, 0.85);
-  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+  background: rgba(243, 245, 246, 0.92);
+  backdrop-filter: blur(8px);
   position: sticky;
   top: 0;
   z-index: 40;
@@ -89,9 +128,10 @@ h1, h2, h3, .display {
 
 .nav-logo {
   font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 1.3rem;
-  letter-spacing: 0.02em;
+  font-weight: 600;
+  font-size: 1.35rem;
+  letter-spacing: -0.01em;
+  color: var(--ink);
 }
 
 .nav-logo .dot {
@@ -104,13 +144,14 @@ h1, h2, h3, .display {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  font-family: var(--font-body);
   font-weight: 600;
-  font-size: 0.95rem;
-  padding: 0.7rem 1.5rem;
-  border-radius: 10px;
+  font-size: 0.9rem;
+  padding: 0.65rem 1.35rem;
+  border-radius: var(--radius-sm);
   border: 1px solid transparent;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .btn:active {
@@ -119,24 +160,30 @@ h1, h2, h3, .display {
 
 .btn-primary {
   background: var(--accent);
-  color: #1a1508;
-  box-shadow: 0 8px 24px -8px rgba(245, 185, 66, 0.55);
+  color: #fff;
+  border-color: var(--accent);
 }
 
 .btn-primary:hover {
-  box-shadow: 0 10px 28px -6px rgba(245, 185, 66, 0.7);
-  transform: translateY(-1px);
+  background: var(--accent-2);
+  border-color: var(--accent-2);
+}
+
+.btn-primary:disabled {
+  background: var(--line-strong);
+  border-color: var(--line-strong);
+  color: var(--ink-faint);
+  cursor: not-allowed;
 }
 
 .btn-ghost {
-  background: transparent;
-  border-color: var(--border);
-  color: var(--text);
+  background: var(--paper-raised);
+  border-color: var(--line);
+  color: var(--ink);
 }
 
 .btn-ghost:hover {
-  border-color: var(--accent-2);
-  color: var(--accent-2);
+  border-color: var(--ink);
 }
 
 .btn-block {
@@ -146,27 +193,38 @@ h1, h2, h3, .display {
 /* ---------- Form fields ---------- */
 .field label {
   display: block;
-  font-size: 0.8rem;
-  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--ink-soft);
   margin-bottom: 0.4rem;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
 }
 
 .field input {
   width: 100%;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 0.75rem 0.9rem;
-  border-radius: 9px;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  padding: 0.7rem 0.85rem;
+  border-radius: var(--radius-sm);
   font-size: 0.95rem;
+  font-family: var(--font-body);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.field input::placeholder {
+  color: var(--ink-faint);
 }
 
 .field input:focus {
   outline: none;
-  border-color: var(--accent-2);
-  box-shadow: 0 0 0 3px rgba(31, 184, 166, 0.18);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-100);
+}
+
+.field input:disabled {
+  background: var(--paper-sunken);
+  color: var(--ink-faint);
 }
 
 .field-error {
@@ -177,140 +235,172 @@ h1, h2, h3, .display {
 
 /* ---------- Flash messages ---------- */
 .flash {
-  border-radius: 10px;
-  padding: 0.8rem 1rem;
-  font-size: 0.9rem;
-  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  font-size: 0.88rem;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line-strong);
+  background: var(--paper-raised);
 }
 
 .flash-error {
-  background: rgba(255, 107, 107, 0.1);
-  border-color: rgba(255, 107, 107, 0.35);
-  color: #ffb4b4;
+  background: var(--danger-tint);
+  border-color: rgba(193, 67, 43, 0.3);
+  border-left-color: var(--danger);
+  color: #7a2c1c;
 }
 
 .flash-success {
-  background: rgba(111, 217, 154, 0.1);
-  border-color: rgba(111, 217, 154, 0.35);
-  color: var(--success);
+  background: var(--success-tint);
+  border-color: rgba(27, 138, 90, 0.3);
+  border-left-color: var(--success);
+  color: #145a3c;
 }
 
 /* ============================================================
-   Ticket card - the signature element.
-   A card with a dashed perforation and two semicircle notches
-   cut out of the edge, like a torn admission stub.
+   Docket — the signature record component.
+   A paper card with a rotated side tab that carries a stamped
+   status word, standing in for a manually-signed paper docket.
    ============================================================ */
-.ticket {
+.docket {
   position: relative;
   display: flex;
-  background: linear-gradient(155deg, var(--surface), var(--surface-2));
-  border: 1px solid var(--border);
-  border-radius: 18px;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
   overflow: hidden;
-  box-shadow: 0 24px 60px -30px rgba(0, 0, 0, 0.75);
+  box-shadow: 0 1px 0 var(--line);
 }
 
-.ticket-body {
+.docket-body {
   flex: 1;
-  padding: 1.6rem 1.7rem;
+  padding: 1.5rem 1.6rem;
   min-width: 0;
 }
 
-.ticket-stub {
-  width: 108px;
+.docket-tab {
+  width: 92px;
   flex-shrink: 0;
-  position: relative;
-  border-left: 2px dashed rgba(237, 239, 247, 0.18);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--ink);
+  border-left: 1px solid var(--line);
 }
 
-.ticket-stub::before,
-.ticket-stub::after {
-  content: "";
-  position: absolute;
-  left: -11px;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--bg);
-  border: 1px solid var(--border);
-}
-
-.ticket-stub::before {
-  top: -11px;
-}
-
-.ticket-stub::after {
-  bottom: -11px;
-}
-
-.ticket-stub-label {
+.docket-tab-label {
   writing-mode: vertical-rl;
   transform: rotate(180deg);
-  font-family: var(--font-display);
+  font-family: var(--font-mono);
   text-transform: uppercase;
-  letter-spacing: 0.28em;
-  font-size: 0.82rem;
-  color: var(--accent);
+  letter-spacing: 0.22em;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #fff;
   white-space: nowrap;
 }
 
-/* Simple flat variant without the stub, for smaller list rows */
+.docket-tab.is-success { background: var(--success); }
+.docket-tab.is-danger { background: var(--danger); }
+
+/* Flat manifest-row variant, for list entries */
 .ticket-row {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 0.9rem 1.1rem;
+  position: relative;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1.05rem;
 }
 
-/* ---------- Credit balance counter ---------- */
+.ticket-row.is-ok { border-left-color: var(--success); }
+.ticket-row.is-fail { border-left-color: var(--danger); }
+
+/* Bracketed manifest status code, e.g. [OK] [FAIL] [WAIT] */
+.manifest-code {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.4rem;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+.manifest-code.ok {
+  color: var(--success);
+  background: var(--success-tint);
+}
+
+.manifest-code.fail {
+  color: var(--danger);
+  background: var(--danger-tint);
+}
+
+/* ---------- Credit balance figure ---------- */
 .credit-counter {
   font-family: var(--font-mono);
-  font-size: 3.2rem;
-  font-weight: 600;
+  font-size: 3rem;
+  font-weight: 500;
   line-height: 1;
-  color: var(--text);
+  color: var(--ink);
   letter-spacing: -0.02em;
 }
 
 .credit-counter .unit {
-  font-size: 1.1rem;
-  color: var(--muted);
+  font-size: 1rem;
+  color: var(--ink-soft);
   margin-left: 0.35rem;
-}
-
-/* Barcode-style decorative stripe */
-.barcode {
-  display: flex;
-  align-items: flex-end;
-  gap: 3px;
-  height: 26px;
-  opacity: 0.55;
-}
-
-.barcode span {
-  background: var(--accent-2);
-  width: 3px;
-  display: inline-block;
 }
 
 /* ---------- Package selection cards ---------- */
 .package-card {
   cursor: pointer;
-  transition: transform 0.15s ease, border-color 0.15s ease;
-  border: 1px solid var(--border);
+  transition: border-color 0.15s ease, background 0.15s ease;
+  border: 1px solid var(--line);
 }
 
 .package-card:hover {
-  transform: translateY(-3px);
+  border-color: var(--line-strong);
 }
 
 .package-card.selected {
   border-color: var(--accent);
+  background: var(--accent-100);
   box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* ============================================================
+   Stamp — full-page confirmation mark.
+   A rotated circular ring with a monospace status word, standing
+   in for the rubber stamp an admin would put on a paper approval.
+   ============================================================ */
+.stamp {
+  --stamp-color: var(--ink-soft);
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  border: 3px solid var(--stamp-color);
+  color: var(--stamp-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  transform: rotate(-8deg);
+  margin: 0 auto 1.25rem;
+}
+
+.stamp.is-success { --stamp-color: var(--success); }
+.stamp.is-danger { --stamp-color: var(--danger); }
+.stamp.is-pending { --stamp-color: var(--ink-faint); }
+
+.stamp-label {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1.25;
 }
 
 /* ---------- Animations ---------- */
@@ -326,48 +416,167 @@ h1, h2, h3, .display {
 }
 
 .fade-up {
-  animation: fadeUp 0.5s ease both;
+  animation: fadeUp 0.4s ease both;
+}
+
+@keyframes stampIn {
+  from {
+    opacity: 0;
+    transform: rotate(-8deg) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(-8deg) scale(1);
+  }
+}
+
+.stamp {
+  animation: stampIn 0.35s ease both;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .fade-up {
+  .fade-up,
+  .stamp {
     animation: none;
   }
 }
 
-/* ---------- Landing hero ---------- */
-.hero-grid {
-  background-image: linear-gradient(rgba(237, 239, 247, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(237, 239, 247, 0.035) 1px, transparent 1px);
-  background-size: 42px 42px;
+/* ============================================================
+   Auth shell — split-panel layout for the entry points
+   (homepage, login, register): a solid brand panel a visitor
+   reads before they act, paired with the actual form.
+   ============================================================ */
+.auth-shell {
+  min-height: 100vh;
+  display: flex;
+}
+
+.auth-panel-brand {
+  flex: 1 1 44%;
+  background: var(--accent-2);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-panel-brand::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.06) 0px,
+    rgba(255, 255, 255, 0.06) 1px,
+    transparent 1px,
+    transparent 32px
+  );
+  pointer-events: none;
+}
+
+.auth-brand-inner {
+  max-width: 30rem;
+  position: relative;
+  z-index: 1;
+}
+
+.auth-logo {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.5rem;
+  color: #fff;
+  display: inline-block;
+  margin-bottom: 2.5rem;
+}
+
+.auth-logo .dot {
+  color: var(--accent-300);
+}
+
+.auth-panel-form {
+  flex: 1 1 56%;
+  background: var(--paper-raised);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+}
+
+.auth-form-inner {
+  width: 100%;
+  max-width: 26rem;
+}
+
+@media (max-width: 860px) {
+  .auth-shell {
+    flex-direction: column;
+  }
+  .auth-panel-brand {
+    padding: 2.5rem 1.5rem;
+  }
+  .auth-brand-inner {
+    max-width: 100%;
+  }
+}
+
+/* Icon-in-field inputs, and the password show/hide toggle */
+.input-icon-wrap {
+  position: relative;
+}
+
+.input-icon-wrap .field-icon-mark {
+  position: absolute;
+  left: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ink-faint);
+  pointer-events: none;
+}
+
+.input-icon-wrap input {
+  padding-left: 2.6rem;
+}
+
+.input-icon-wrap.has-toggle input {
+  padding-right: 2.6rem;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 0.3rem;
+  cursor: pointer;
+  color: var(--ink-faint);
+  display: flex;
+  border-radius: var(--radius-sm);
+}
+
+.password-toggle:hover {
+  color: var(--ink);
 }
 
 @media (max-width: 640px) {
-  .ticket {
+  .docket {
     flex-direction: column;
   }
-  .ticket-stub {
+  .docket-tab {
     width: 100%;
-    height: 56px;
+    height: 44px;
     border-left: none;
-    border-top: 2px dashed rgba(237, 239, 247, 0.18);
+    border-top: 1px solid var(--line);
   }
-  .ticket-stub::before,
-  .ticket-stub::after {
-    top: -11px;
-    left: auto;
-  }
-  .ticket-stub::before {
-    left: -11px;
-  }
-  .ticket-stub::after {
-    right: -11px;
-  }
-  .ticket-stub-label {
+  .docket-tab-label {
     writing-mode: horizontal-tb;
     transform: none;
   }
   .credit-counter {
-    font-size: 2.4rem;
+    font-size: 2.2rem;
   }
 }

@@ -1,22 +1,18 @@
 {% extends "base.html" %}
-{% block title %}Registration received - Tixlinx{% endblock %}
+{% block title %}Registration received - Genlinklab{% endblock %}
 {% block content %}
 
 <div class="max-w-md mx-auto text-center">
-  <div class="ticket fade-up">
-    <div class="ticket-body">
-      <p class="eyebrow mb-3">Status: awaiting approval</p>
-      <h1 class="display text-3xl mb-4">Thanks - check your inbox soon</h1>
-      <p class="text-sm mb-6" style="color:var(--muted)">
-        We've emailed your details to our admin team for review. Once approved, you'll get a
-        confirmation email and can log straight in. This usually doesn't take long.
-      </p>
-      <a href="{{ url_for('main.index') }}" class="btn btn-ghost">Back to home</a>
-    </div>
-    <div class="ticket-stub">
-      <span class="ticket-stub-label">Waiting</span>
-    </div>
+  <div class="stamp is-pending">
+    <span class="stamp-label">Under<br>review</span>
   </div>
+  <p class="eyebrow mb-3">Status: awaiting approval</p>
+  <h1 class="display text-3xl mb-4">Thanks - check your inbox soon</h1>
+  <p class="text-sm mb-6" style="color:var(--muted)">
+    We've emailed your details to our admin team for review. Once approved, you'll get a
+    confirmation email and can log straight in. This usually doesn't take long.
+  </p>
+  <a href="{{ url_for('main.index') }}" class="btn btn-ghost">Back to home</a>
 </div>
 
 {% endblock %}

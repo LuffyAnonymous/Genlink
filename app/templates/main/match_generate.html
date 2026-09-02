@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ match.name }} - Ticket Manager - Tixlinx{% endblock %}
+{% block title %}{{ match.name }} - Ticket Manager - Genlinklab{% endblock %}
 {% block content %}
 
 <a href="{{ url_for('main.club_matches', slug=club.slug) }}"
@@ -63,9 +63,9 @@
   <div class="md:col-span-2 space-y-6">
 
     <!-- Single account -->
-    <div class="ticket fade-up">
+    <div class="docket fade-up">
 
-      <div class="ticket-body">
+      <div class="docket-body">
 
         <p class="eyebrow mb-3">Single account</p>
 
@@ -155,8 +155,8 @@
       </div>
 
 
-      <div class="ticket-stub">
-        <span class="ticket-stub-label">
+      <div class="docket-tab">
+        <span class="docket-tab-label">
           {{ club.name[:3]|upper }}
         </span>
       </div>
@@ -214,11 +214,11 @@
             accept=".csv"
             required
             style="
-              background:var(--surface-2);
-              border:1px solid var(--border);
+              background:var(--paper-raised);
+              border:1px solid var(--line);
               color:var(--text);
               padding:0.65rem 0.9rem;
-              border-radius:9px;
+              border-radius:var(--radius-sm);
               font-size:0.9rem;
               width:100%;
             "
