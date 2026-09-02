@@ -38,7 +38,10 @@ def _parse_event_date(value):
         return value
     if dateutil_parser is not None:
         try:
-            return dateutil_parser.parse(str(value))
+            # dayfirst=True: the real API returns UK-style dd/mm/yyyy dates -
+            # without this, dateutil assumes US mm/dd/yyyy and would silently
+            # misread any date where the day is 12 or less.
+            return dateutil_parser.parse(str(value), dayfirst=True)
         except (ValueError, TypeError, OverflowError):
             return None
     # Fallback without python-dateutil: try a couple of common formats
@@ -91,7 +94,7 @@ def call_link_generation_api(payload: dict, app_config) -> LinkGenResult:
             if payload.get("match_name") == indevent.get("eventname") and payload.get("email") == indevent.get("supporterid"):
                 link = indevent.get("nfc")
                 match_name = indevent.get("eventname")
-                event_date = datetime.strptime(indevent.get("eventdate"), "%d/%m/%Y %H:%M")
+                event_date = _parse_event_date(indevent.get("eventdate"))
                 return LinkGenResult(True, link, data, match_name=match_name, event_date=event_date)
 
         return LinkGenResult(False, None, {"error": "No matching event found in response"})

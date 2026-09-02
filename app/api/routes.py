@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, current_app
 from flask_login import login_required, current_user
 
+from app.extensions import limiter
 from app.services.link_jobs import run_link_job
 
 api_bp = Blueprint("api", __name__)
@@ -8,6 +9,7 @@ api_bp = Blueprint("api", __name__)
 
 @api_bp.route("/generate-link", methods=["POST"])
 @login_required
+@limiter.limit("30 per minute", key_func=lambda: str(current_user.get_id()))
 def generate_link():
     payload = request.get_json(silent=True) or {}
 

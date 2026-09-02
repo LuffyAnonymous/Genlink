@@ -138,8 +138,12 @@
   </p>
 
   <span class="mono">
-    {{ results[-1].credits_remaining if results else current_user.credits }}
-    credits
+    {% if current_user.has_unlimited %}
+      Unlimited until {{ current_user.unlimited_until.strftime('%d %b %Y') }}
+    {% else %}
+      {{ results[-1].credits_remaining if results else current_user.credits }}
+      credits
+    {% endif %}
   </span>
 
 </div>

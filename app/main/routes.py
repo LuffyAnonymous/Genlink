@@ -1,5 +1,6 @@
 import io
-from datetime import datetime
+from datetime import datetime, timedelta
+from sqlalchemy import or_
 from app.clubs import CLUBS, get_club
 from app.extensions import db
 from app.services.link_jobs import run_link_job
@@ -69,8 +70,23 @@ def _get_club_or_404(slug):
     return club
 
 
+# How long after kickoff a match still counts as "upcoming" - covers a full
+# 90 minutes plus stoppage/extra time, so it doesn't disappear mid-game.
+MATCH_GRACE_PERIOD = timedelta(hours=3)
+
+
+def _not_finished():
+    cutoff = datetime.utcnow() - MATCH_GRACE_PERIOD
+    return or_(Match.kickoff_at.is_(None), Match.kickoff_at >= cutoff)
+
+
 def _get_match_or_404(slug, match_id):
-    match = Match.query.filter_by(id=match_id, club_slug=slug, is_active=True).first()
+    match = Match.query.filter(
+        Match.id == match_id,
+        Match.club_slug == slug,
+        Match.is_active.is_(True),
+        _not_finished(),
+    ).first()
     if not match:
         abort(404)
     return match
@@ -81,7 +97,11 @@ def _get_match_or_404(slug, match_id):
 def club_matches(slug):
     club = _get_club_or_404(slug)
     matches = (
-        Match.query.filter_by(club_slug=slug, is_active=True)
+        Match.query.filter(
+            Match.club_slug == slug,
+            Match.is_active.is_(True),
+            _not_finished(),
+        )
         .order_by(Match.kickoff_at.asc().nullslast())
         .all()
     )

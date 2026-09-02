@@ -56,7 +56,7 @@
      both themes rather than following --ink/--accent-2, which flip
      meaning between light and dark mode. */
   --ink-panel: #12161a;
-  --brand-panel: #1b3a9c;
+  --brand-panel: #12161a;
 
   --nav-bg: rgba(243, 245, 246, 0.92);
 
@@ -181,10 +181,6 @@ input:focus-visible,
   font-size: 1.35rem;
   letter-spacing: -0.01em;
   color: var(--ink);
-}
-
-.nav-logo .dot {
-  color: var(--accent);
 }
 
 /* ---------- Buttons ---------- */
@@ -652,6 +648,111 @@ input:focus-visible,
 }
 
 /* ============================================================
+   Review card — avatar-led one-off decision screens (approve a
+   registration, confirm a bank transfer, view a pending transfer).
+   Deliberately not a docket/manifest entry - these are a single
+   human decision, not a logged record, so they read as a profile
+   summary instead of a bordered data table.
+   ============================================================ */
+.review-card {
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+}
+
+.review-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.review-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.15rem;
+}
+
+.review-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.2rem;
+  color: var(--ink);
+  line-height: 1.3;
+}
+
+.review-meta {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  margin-top: 0.1rem;
+}
+
+.review-lede {
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+  line-height: 1.55;
+  margin-bottom: 1.5rem;
+}
+
+.review-figure {
+  font-family: var(--font-mono);
+  font-size: 2.4rem;
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin-bottom: 1.5rem;
+}
+
+.review-figure .unit {
+  font-size: 1rem;
+  color: var(--ink-soft);
+  margin-left: 0.4rem;
+  font-weight: 400;
+}
+
+.review-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin-bottom: 1.75rem;
+}
+
+.review-detail {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  font-size: 0.88rem;
+}
+
+.review-detail-label {
+  color: var(--ink-soft);
+}
+
+.review-detail-value {
+  font-family: var(--font-mono);
+  color: var(--ink);
+  text-align: right;
+  word-break: break-word;
+}
+
+.review-detail-value.is-accent {
+  color: var(--accent-2);
+  font-weight: 600;
+}
+
+/* ============================================================
    Auth shell — split-panel layout for the entry points
    (homepage, login, register): a solid brand panel a visitor
    reads before they act, paired with the actual form.
@@ -662,7 +763,7 @@ input:focus-visible,
 }
 
 .auth-panel-brand {
-  flex: 1 1 44%;
+  flex: 1 1 70%;
   background: var(--brand-panel);
   color: #fff;
   display: flex;
@@ -671,20 +772,6 @@ input:focus-visible,
   padding: 3rem;
   position: relative;
   overflow: hidden;
-}
-
-.auth-panel-brand::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: repeating-linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0.06) 0px,
-    rgba(255, 255, 255, 0.06) 1px,
-    transparent 1px,
-    transparent 32px
-  );
-  pointer-events: none;
 }
 
 .auth-brand-inner {
@@ -702,12 +789,10 @@ input:focus-visible,
   margin-bottom: 2.5rem;
 }
 
-.auth-logo .dot {
-  color: var(--accent-300);
-}
 
 .auth-panel-form {
-  flex: 1 1 56%;
+  flex: 1 1 30%;
+  min-width: 22rem;
   background: var(--paper-raised);
   display: flex;
   align-items: center;

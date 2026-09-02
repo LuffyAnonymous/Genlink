@@ -8,15 +8,28 @@
 </div>
 
 <div class="settings-row fade-up">
-  <div>
-    <p class="setting-title">
-      Credits
-      <span class="setting-value">{{ current_user.credits }}</span>
-    </p>
-    <p class="setting-description">
-      Current balance &middot; &pound;{{ current_user.credits }}.00 value &middot; 1 credit = &pound;1.00, spent only on a successful link.
-    </p>
-  </div>
+  {% if current_user.has_unlimited %}
+    <div>
+      <p class="setting-title">
+        Credits
+        <span class="setting-value">Unlimited</span>
+      </p>
+      <p class="setting-description">
+        Unlimited link generation until {{ current_user.unlimited_until.strftime('%d %b %Y') }} &middot;
+        {{ current_user.credits }} credit(s) still banked for after it expires.
+      </p>
+    </div>
+  {% else %}
+    <div>
+      <p class="setting-title">
+        Credits
+        <span class="setting-value">{{ current_user.credits }}</span>
+      </p>
+      <p class="setting-description">
+        Current balance &middot; &pound;{{ current_user.credits }}.00 value &middot; 1 credit = &pound;1.00, spent only on a successful link.
+      </p>
+    </div>
+  {% endif %}
   <a href="{{ url_for('billing.buy_credits_page') }}" class="btn btn-primary flex-shrink-0">
     Add credits
   </a>

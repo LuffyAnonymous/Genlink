@@ -7,7 +7,9 @@
     <span class="stamp-label">Paid</span>
   </div>
   <p class="eyebrow mb-3" style="color:var(--success)">{{ 'Already confirmed' if already else 'Payment confirmed' }}</p>
-  <h1 class="display text-3xl mb-4">{{ transfer.credits }} credits added</h1>
+  <h1 class="display text-3xl mb-4">
+    {% if transfer.kind == "unlimited_month" %}Unlimited access granted{% else %}{{ transfer.credits }} credits added{% endif %}
+  </h1>
   <p class="text-sm mb-2" style="color:var(--muted)">{{ transfer.user.name }} - {{ transfer.user.email }}</p>
   <p class="text-sm mb-6" style="color:var(--muted)">Reference {{ transfer.reference }}</p>
 </div>

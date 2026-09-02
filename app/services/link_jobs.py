@@ -29,13 +29,17 @@ def run_link_job(user_id: int, payload: dict, app_config) -> dict:
     customer's ticketing account) and `match_name`; `proxy` and `club` are
     optional. Returns a plain dict - callers turn it into a jsonify()
     response or a row in a results table as needed."""
-    cost = app_config["LINKGEN_COST_CREDITS"]
     account_email = payload.get("email")
     match_name = payload.get("match_name")
 
     # Row lock so concurrent submissions from the same user (e.g. a fast
     # CSV loop) can't both pass the balance/dedup check and overspend.
     user = db.session.query(User).with_for_update().get(user_id)
+
+    # A customer with an active unlimited-month pass never has a credit
+    # cost - zeroing it here means every balance check and deduction below
+    # (both branches) is automatically a no-op, without special-casing each.
+    cost = 0 if user.has_unlimited else app_config["LINKGEN_COST_CREDITS"]
 
     # Dedup: if this exact account already has a generated link for this
     # match, reuse it instead of calling the API again or spending a credit.
@@ -63,72 +67,70 @@ def run_link_job(user_id: int, payload: dict, app_config) -> dict:
         }
 
 
-    # Check tickets table
-    ticket = Ticket.query.filter_by(
-        supporter_id=account_email,
-        event_name=match_name
-    ).first()
+    # Local-dev-only mock: hand out a link straight from the `tickets`
+    # table instead of calling the real API, so the full flow can be
+    # tested without a link-generation API running. Off by default - see
+    # ENABLE_MOCK_TICKET_LOOKUP in app/config.py. This still skips password
+    # verification and the real API call entirely, so it must never be on
+    # anywhere real users can reach the app.
+    if app_config.get("ENABLE_MOCK_TICKET_LOOKUP"):
+        ticket = Ticket.query.filter_by(
+            supporter_id=account_email,
+            event_name=match_name
+        ).first()
 
+        if ticket:
+            if user.credits < cost:
+                return {
+                    "success": False,
+                    "error": "insufficient_credits",
+                    "message": f"You need at least {cost} credit(s) to generate this ticket.",
+                    "credits_remaining": user.credits,
+                    "email": account_email,
+                }
 
-    # Ticket already exists in tickets table
-    if ticket:
+            link = ticket.nfc
+            try:
+                event_date = datetime.strptime(ticket.event_date, "%d/%m/%Y %H:%M")
+            except (TypeError, ValueError):
+                event_date = None
 
-        cost = 1
+            db.session.add(
+                GeneratedTicket(
+                    user_id=user_id,
+                    account_email=account_email,
+                    match_name=ticket.event_name,
+                    event_date=event_date,
+                    ticket_link=link,
+                    club_slug=payload.get("club"),
+                )
+            )
 
-        if user.credits < cost:
+            user.credits -= cost
+
+            try:
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                return {
+                    "success": False,
+                    "error": "database_error",
+                    "message": str(e),
+                    "credits_remaining": user.credits + cost,
+                    "email": account_email,
+                }
+
             return {
-                "success": False,
-                "error": "insufficient_credits",
-                "message": "You need at least 1 credit to generate this ticket.",
+                "success": True,
+                "reused": False,
+                "unlimited": user.has_unlimited,
+                "link": link,
+                "credits_consumed": cost,
                 "credits_remaining": user.credits,
                 "email": account_email,
+                "message": "Ticket link generated successfully.",
             }
 
-        # Use the existing ticket
-        link = ticket.nfc
-        event_date = datetime.strptime(
-            ticket.event_date,
-            "%d/%m/%Y %H:%M"
-        )
-        generated_ticket = GeneratedTicket(
-            user_id=user_id,
-            account_email=account_email,
-            match_name=ticket.event_name,
-            event_date=event_date,
-            ticket_link=link,
-            club_slug="manutd"
-        )
-
-        db.session.add(generated_ticket)
-
-        # Charge 1 credit
-        user.credits -= 1
-
-        try:
-            db.session.commit()
-
-        except Exception as e:
-            db.session.rollback()
-
-            return {
-                "success": False,
-                "error": "database_error",
-                "message": str(e),
-                "credits_remaining": user.credits + 1
-            }
-
-        return {
-            "success": True,
-            "reused": False,
-            "link": link,
-            "credits_consumed": 1,
-            "credits_remaining": user.credits,
-            "email": account_email,
-            "message": "Ticket link generated successfully."
-        }
-
-
-    # No ticket found - continue with your existing generation
     if user.credits < cost:
         return {
             "success": False,
@@ -179,6 +181,7 @@ def run_link_job(user_id: int, payload: dict, app_config) -> dict:
         return {
             "success": True,
             "reused": False,
+            "unlimited": user.has_unlimited,
             "link": result.link,
             "credits_consumed": cost,
             "credits_remaining": user.credits,

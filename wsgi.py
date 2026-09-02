@@ -1,8 +1,10 @@
 import os
+import click
 from datetime import datetime, timedelta
 from app import create_app
 from app.extensions import db
 from app.models import Match, User, Ticket
+from app.utils.linkgen import call_link_generation_api
 from werkzeug.security import generate_password_hash
 
 app = create_app()
@@ -98,33 +100,29 @@ def seed_db():
 
 @app.cli.command("add-manutd-fixtures")
 def add_manutd_fixtures():
-    """Add Manchester United's 2026/27 season HOME fixtures (all competitions,
-    Old Trafford only - away games aren't sold through this platform) as
+    """Add Manchester United's 2026/27 Premier League HOME fixtures (Old
+    Trafford only - away games aren't sold through this platform) as
     upcoming matches. Safe to re-run - skips any fixture already present for
-    the same opponent/kickoff. Times are UK local, converted from the US
-    broadcast times published by ESPN.
+    the same opponent/kickoff. Kickoff times are UK local.
     Run with: flask --app wsgi.py add-manutd-fixtures"""
     # (away_team, kickoff_at) - home_team is always Manchester United
     home_fixtures = [
-        ("Everton", datetime(2026, 9, 6, 14, 0)),
-        ("Brighton & Hove Albion", datetime(2026, 9, 16, 20, 0)),
-        ("Tottenham Hotspur", datetime(2026, 10, 10, 17, 30)),
-        ("AFC Bournemouth", datetime(2026, 10, 25, 15, 0)),
-        ("AS Roma", datetime(2026, 11, 3, 20, 0)),
+        ("Ipswich Town", datetime(2026, 8, 29, 15, 0)),
+        ("Manchester City", datetime(2026, 9, 12, 15, 0)),
+        ("Tottenham Hotspur", datetime(2026, 10, 10, 15, 0)),
+        ("AFC Bournemouth", datetime(2026, 10, 24, 15, 0)),
         ("Aston Villa", datetime(2026, 11, 7, 15, 0)),
         ("Brentford", datetime(2026, 11, 28, 15, 0)),
         ("Coventry City", datetime(2026, 12, 5, 15, 0)),
-        ("RB Leipzig", datetime(2026, 12, 8, 20, 0)),
         ("Nottingham Forest", datetime(2026, 12, 26, 15, 0)),
-        ("Sunderland", datetime(2026, 12, 30, 20, 0)),
+        ("Sunderland", datetime(2026, 12, 30, 15, 0)),
         ("Newcastle United", datetime(2027, 1, 6, 20, 0)),
-        ("Bayern Munich", datetime(2027, 1, 20, 20, 0)),
         ("Liverpool", datetime(2027, 1, 23, 15, 0)),
         ("Chelsea", datetime(2027, 2, 6, 15, 0)),
         ("Brighton & Hove Albion", datetime(2027, 2, 10, 20, 0)),
         ("Arsenal", datetime(2027, 2, 27, 15, 0)),
         ("Everton", datetime(2027, 3, 13, 15, 0)),
-        ("Hull City", datetime(2027, 4, 10, 15, 0)),
+        ("Hull City", datetime(2027, 4, 10, 16, 0)),
         ("Crystal Palace", datetime(2027, 4, 24, 15, 0)),
         ("Leeds United", datetime(2027, 5, 15, 15, 0)),
         ("Fulham", datetime(2027, 5, 30, 16, 0)),
@@ -154,6 +152,83 @@ def add_manutd_fixtures():
 
         db.session.commit()
         print(f"Added {added} fixture(s). {len(fixtures) - added} already existed and were skipped.")
+
+
+@app.cli.command("check-config")
+def check_config():
+    """Quick sanity check of the current .env - catches the mistakes that
+    fail silently (mail suppressed, a placeholder secret left in, mock mode
+    left on) instead of needing a debugging session to notice. Safe to run
+    any time, touches nothing.
+    Run with: flask --app wsgi.py check-config"""
+    problems = []
+    warnings = []
+
+    if app.config.get("MAIL_SUPPRESS_SEND"):
+        warnings.append("MAIL_SUPPRESS_SEND is true - no emails are actually being sent right now.")
+
+    mail_password = app.config.get("MAIL_PASSWORD") or ""
+    mail_server = app.config.get("MAIL_SERVER") or ""
+    if not mail_password or "unused" in mail_password.lower() or "replace" in mail_password.lower():
+        problems.append("MAIL_PASSWORD looks unset/placeholder - mail will fail to send.")
+    elif "gmail.com" in mail_server and " " not in mail_password and len(mail_password) != 16:
+        problems.append(
+            "MAIL_PASSWORD doesn't look like a Gmail App Password (16 characters) - "
+            "if this is your regular account password, Gmail will reject it."
+        )
+
+    if app.config.get("SECRET_KEY") == "dev-secret-change-me":
+        problems.append("SECRET_KEY is the dev default - must be a real random value anywhere but local dev.")
+
+    db_url = app.config.get("SQLALCHEMY_DATABASE_URI") or ""
+    if db_url.startswith("sqlite"):
+        warnings.append(f"Database is SQLite ({db_url}) - fine for local dev, must be real Postgres for anything real.")
+    elif not db_url:
+        problems.append("DATABASE_URL is not set.")
+
+    if app.config.get("ENABLE_MOCK_TICKET_LOOKUP"):
+        warnings.append(
+            "ENABLE_MOCK_TICKET_LOOKUP is on - link generation is faked, not calling the real API. "
+            "Must be off anywhere real users can reach the app."
+        )
+
+    if not app.config.get("LINKGEN_API_KEY"):
+        warnings.append("LINKGEN_API_KEY is not set.")
+
+    if not app.config.get("SESSION_COOKIE_SECURE"):
+        warnings.append("SESSION_COOKIE_SECURE is off - correct for local http://, must be on anywhere real.")
+
+    print("=== Config check ===")
+    if not problems and not warnings:
+        print("Nothing looks wrong.")
+    for p in problems:
+        print(f"[BROKEN] {p}")
+    for w in warnings:
+        print(f"[WARN]   {w}")
+
+
+@app.cli.command("test-linkgen")
+@click.option("--email", required=True, help="Ticketing account email or Supporter ID")
+@click.option("--password", required=True, help="Ticketing account password")
+@click.option("--match-name", required=True, help='Exact match name, e.g. "Manchester United v Everton"')
+@click.option("--proxy", default=None, help="Optional proxy, e.g. user:pass@host:port")
+def test_linkgen(email, password, match_name, proxy):
+    """One-off real call to LINKGEN_API_URL, using the exact same request/
+    response code (app/utils/linkgen.py) that /api/generate-link uses in
+    production - no credits touched, nothing written to the database. Run
+    this against your real LINKGEN_API_URL/LINKGEN_API_KEY before going
+    live, to confirm the real API is reachable and its response actually
+    parses the way this app expects.
+    Run with: flask --app wsgi.py test-linkgen --email ACCOUNT --password PASS --match-name "Manchester United v Everton" """
+    with app.app_context():
+        payload = {"email": email, "password": password, "match_name": match_name, "proxy": proxy}
+        print(f"Calling {app.config['LINKGEN_API_URL']} ...")
+        result = call_link_generation_api(payload, app.config)
+        print(f"success:     {result.success}")
+        print(f"link:        {result.link}")
+        print(f"match_name:  {result.match_name}")
+        print(f"event_date:  {result.event_date}")
+        print(f"raw response: {result.raw}")
 
 
 if __name__ == "__main__":

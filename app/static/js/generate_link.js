@@ -87,19 +87,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (data.success) {
 
-        const reuseNote = data.reused
-          ? `
+        let reuseNote;
+        if (data.reused) {
+          reuseNote = `
             <div class="flash flash-success">
               Existing link reused - no credit charged.
               Balance: ${data.credits_remaining}
             </div>
-          `
-          : `
+          `;
+        } else if (data.unlimited) {
+          reuseNote = `
+            <div class="flash flash-success">
+              Success - unlimited access, no credit charged.
+            </div>
+          `;
+        } else {
+          reuseNote = `
             <div class="flash flash-success">
               Success - 1 credit consumed.
               Balance: ${data.credits_remaining}
             </div>
           `;
+        }
 
 
         /*
@@ -142,7 +151,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
               <input
                 type="text"
-                value="${escapeHtml(data.link)}"
                 readonly
                 class="generated-link-input"
                 style="
@@ -184,6 +192,10 @@ document.addEventListener("DOMContentLoaded", () => {
           ".generated-link-input"
         );
 
+        // Set as a DOM property rather than templating it into the HTML
+        // attribute above - the link comes from a third-party API response,
+        // so it isn't a value this app fully controls.
+        linkInput.value = data.link;
 
         copyBtn.addEventListener("click", async () => {
 

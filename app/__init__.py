@@ -1,7 +1,7 @@
-from flask import Flask
+from flask import Flask, flash, redirect, request, url_for, jsonify
 from werkzeug.middleware.proxy_fix import ProxyFix
 from app.config import Config
-from app.extensions import db, login_manager, mail, csrf
+from app.extensions import db, login_manager, mail, csrf, limiter
 
 
 def create_app(config_class=Config):
@@ -18,6 +18,7 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
     mail.init_app(app)
     csrf.init_app(app)
+    limiter.init_app(app)
 
     login_manager.login_view = "auth.login"
     login_manager.login_message = "Please log in to continue."
@@ -42,5 +43,21 @@ def create_app(config_class=Config):
     @app.context_processor
     def inject_globals():
         return {"admin_email": app.config["ADMIN_EMAIL"]}
+
+    @app.template_filter("initials")
+    def initials_filter(name):
+        parts = [p for p in (name or "").split() if p]
+        if not parts:
+            return "?"
+        if len(parts) == 1:
+            return parts[0][0].upper()
+        return (parts[0][0] + parts[-1][0]).upper()
+
+    @app.errorhandler(429)
+    def rate_limited(e):
+        if request.path.startswith("/api/"):
+            return jsonify({"success": False, "error": "rate_limited", "message": "Too many requests - please slow down and try again shortly."}), 429
+        flash("Too many attempts - please wait a minute and try again.", "error")
+        return redirect(request.referrer or url_for("main.index"))
 
     return app

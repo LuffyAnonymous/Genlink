@@ -184,33 +184,45 @@
   <!-- Balance -->
   <div class="ticket-row">
 
-    <p class="eyebrow mb-3">
-      Your balance
-    </p>
+    {% if current_user.has_unlimited %}
 
-    <div class="flex items-end gap-2">
+      <p class="eyebrow mb-3">Your balance</p>
 
-      <span
-        class="credit-counter"
-        style="font-size:2.2rem"
-        data-counter
-        data-value="{{ current_user.credits }}"
-      >
-        0
-      </span>
+      <p class="display text-2xl mb-1">Unlimited</p>
+      <p class="text-xs" style="color:var(--muted)">
+        Until {{ current_user.unlimited_until.strftime('%d %b %Y') }} - no credits spent
+      </p>
 
-      <span class="unit">
-        credits
-      </span>
+    {% else %}
 
-    </div>
+      <p class="eyebrow mb-3">
+        Your balance
+      </p>
 
+      <div class="flex items-end gap-2">
+
+        <span
+          class="credit-counter"
+          style="font-size:2.2rem"
+          data-counter
+          data-value="{{ current_user.credits }}"
+        >
+          0
+        </span>
+
+        <span class="unit">
+          credits
+        </span>
+
+      </div>
+
+    {% endif %}
 
     <a
       href="{{ url_for('billing.buy_credits_page') }}"
       class="btn btn-ghost btn-block mt-4"
     >
-      Buy more credits
+      {% if current_user.has_unlimited %}Buy credits{% else %}Buy more credits{% endif %}
     </a>
 
   </div>

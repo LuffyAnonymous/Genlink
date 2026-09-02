@@ -24,7 +24,7 @@
 <body class="min-h-screen">
   <nav class="nav">
     <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
-      <a href="{{ url_for('main.index') }}" class="nav-logo flex-shrink-0" style="white-space:nowrap">gen<span class="dot">/</span>link lab</a>
+      <a href="{{ url_for('main.index') }}" class="nav-logo flex-shrink-0" style="white-space:nowrap">GenLinkLab</a>
       <div class="flex items-center gap-3 text-sm" style="overflow-x:auto; flex-wrap:nowrap; white-space:nowrap">
         {% if current_user.is_authenticated %}
           <a href="{{ url_for('main.ticket_manager') }}" class="btn btn-ghost">Ticket Manager</a>

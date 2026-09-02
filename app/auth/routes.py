@@ -1,11 +1,11 @@
 import secrets
 from datetime import datetime, timedelta
 
-from flask import Blueprint, render_template, redirect, url_for, flash, current_app
+from flask import Blueprint, render_template, redirect, url_for, flash, current_app, request
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from app.extensions import db
+from app.extensions import db, limiter
 from app.models import User, RegistrationToken
 from app.auth.forms import RegistrationForm, LoginForm
 from app.utils.email import send_admin_registration_email, send_user_welcome_email
@@ -14,6 +14,7 @@ auth_bp = Blueprint("auth", __name__)
 
 
 @auth_bp.route("/register", methods=["GET", "POST"])
+@limiter.limit("5 per hour")
 def register():
     if current_user.is_authenticated:
         return redirect(url_for("main.ticket_manager"))
@@ -66,10 +67,23 @@ def pending():
     return render_template("auth/pending.html")
 
 
-@auth_bp.route("/admin/confirm/<token>")
+@auth_bp.route("/admin/confirm/<token>", methods=["GET", "POST"])
 def confirm_registration(token):
+    """GET only ever displays the pending registration - it approves
+    nothing, so a mail scanner or link-preview bot fetching this URL from
+    the admin's inbox can't silently approve an account. The admin has to
+    submit the form below (a real POST) for anything to happen."""
     record = RegistrationToken.query.filter_by(token=token).first()
 
+    if not record or not record.is_valid():
+        return render_template("auth/confirm_invalid.html"), 400
+
+    if request.method == "GET":
+        return render_template("auth/confirm_registration.html", user=record.user)
+
+    # Lock the token row so two near-simultaneous submits (a double-click,
+    # or a retried request) can't both slip past the is_valid() check.
+    record = RegistrationToken.query.with_for_update().filter_by(token=token).first()
     if not record or not record.is_valid():
         return render_template("auth/confirm_invalid.html"), 400
 
@@ -88,6 +102,7 @@ def confirm_registration(token):
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
+@limiter.limit("10 per minute;50 per hour")
 def login():
     if current_user.is_authenticated:
         return redirect(url_for("main.ticket_manager"))

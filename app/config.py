@@ -15,6 +15,14 @@ class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-change-me")
     APP_BASE_URL = os.environ.get("APP_BASE_URL", "http://localhost:3001")
 
+    # Cookie hardening. SESSION_COOKIE_SECURE defaults on since the app is
+    # meant to sit behind HTTPS (see ProxyFix in app/__init__.py) - turn it
+    # off only for local http:// development, where a Secure cookie would
+    # never get sent back by the browser.
+    SESSION_COOKIE_SECURE = _env_bool("SESSION_COOKIE_SECURE", True)
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+
     SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True}
@@ -50,7 +58,22 @@ class Config:
     LINKGEN_API_KEY = os.environ.get("LINKGEN_API_KEY")
     LINKGEN_COST_CREDITS = int(os.environ.get("LINKGEN_COST_CREDITS", 1))
 
+    # Local-dev-only shortcut: when on, run_link_job() will hand out a link
+    # straight from the `tickets` table (seeded by `flask seed-db`) instead
+    # of calling LINKGEN_API_URL, so you can test the full credit/dedup flow
+    # without a real link-generation API running. Leave this off anywhere
+    # real users can reach the app - it skips password verification and the
+    # actual API call entirely.
+    ENABLE_MOCK_TICKET_LOOKUP = _env_bool("ENABLE_MOCK_TICKET_LOOKUP", False)
+
     # Cap request body size (mainly relevant to the CSV bulk upload)
     MAX_CONTENT_LENGTH = 2 * 1024 * 1024  # 2 MB
 
     WTF_CSRF_TIME_LIMIT = None
+
+    # --- Rate limiting (Flask-Limiter) ---
+    # In-memory by default - fine for a single worker, but limits aren't
+    # shared across gunicorn workers. Point this at Redis (e.g.
+    # redis://localhost:6379) once you run more than one worker and want
+    # exact limits rather than "roughly N workers x the stated rate."
+    RATELIMIT_STORAGE_URI = os.environ.get("RATELIMIT_STORAGE_URI", "memory://")

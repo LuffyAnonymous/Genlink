@@ -33,19 +33,21 @@ CREATE TABLE users (
 	password_hash VARCHAR(255) NOT NULL, 
 	is_approved BOOLEAN NOT NULL, 
 	approved_at TIMESTAMP WITHOUT TIME ZONE, 
-	credits INTEGER NOT NULL, 
-	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, 
+	credits INTEGER NOT NULL,
+	unlimited_until TIMESTAMP WITHOUT TIME ZONE,
+	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
 	PRIMARY KEY (id)
 );
 CREATE UNIQUE INDEX ix_users_email ON users (email);
 
 CREATE TABLE bank_transfer_requests (
-	id SERIAL NOT NULL, 
-	user_id INTEGER NOT NULL, 
-	credits INTEGER NOT NULL, 
-	reference VARCHAR(32) NOT NULL, 
-	token VARCHAR(64) NOT NULL, 
-	status VARCHAR(20) NOT NULL, 
+	id SERIAL NOT NULL,
+	user_id INTEGER NOT NULL,
+	credits INTEGER NOT NULL,
+	kind VARCHAR(20) NOT NULL,
+	reference VARCHAR(32) NOT NULL,
+	token VARCHAR(64) NOT NULL,
+	status VARCHAR(20) NOT NULL,
 	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, 
 	confirmed_at TIMESTAMP WITHOUT TIME ZONE, 
 	PRIMARY KEY (id), 

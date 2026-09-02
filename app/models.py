@@ -17,7 +17,16 @@ class User(db.Model, UserMixin):
 
     credits = db.Column(db.Integer, default=0, nullable=False)
 
+    # Set when a customer buys the unlimited-for-1-month pass instead of
+    # credits - while this is in the future, run_link_job() skips the
+    # credit check/deduction entirely rather than reading `credits`.
+    unlimited_until = db.Column(db.DateTime, nullable=True)
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    @property
+    def has_unlimited(self):
+        return self.unlimited_until is not None and self.unlimited_until > datetime.utcnow()
 
     registration_tokens = db.relationship(
         "RegistrationToken", backref="user", lazy=True, cascade="all, delete-orphan"
@@ -76,7 +85,12 @@ class BankTransferRequest(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    # For kind="credits", this is the number of credits bought (GBP 1 =
+    # 1 credit). For kind="unlimited_month", this is just the GBP price
+    # paid (UNLIMITED_MONTH_PRICE) - no credits are granted, an expiry is
+    # set on the user instead.
     credits = db.Column(db.Integer, nullable=False)
+    kind = db.Column(db.String(20), default="credits", nullable=False)  # credits | unlimited_month
     reference = db.Column(db.String(32), unique=True, nullable=False, index=True)
     token = db.Column(db.String(64), unique=True, nullable=False, index=True)
     status = db.Column(db.String(20), default="pending", nullable=False)  # pending | confirmed

@@ -3,47 +3,46 @@
 {% block content %}
 
 <div class="max-w-md mx-auto">
-  <div class="docket fade-up mb-6">
-    <div class="docket-body">
-      <p class="eyebrow mb-3">Status: awaiting payment</p>
-      <h1 class="display text-2xl mb-4">Send your bank transfer</h1>
-      <p class="text-sm mb-6" style="color:var(--muted)">
-        Transfer <strong>&pound;{{ transfer.credits }}.00 {{ bank.currency }}</strong> using the details
-        below and include the payment reference so we can match it to your account. Credits are
-        added once we've manually confirmed the funds have arrived - please allow some time for this.
+  <div class="review-card fade-up mb-6">
+
+    <div class="review-figure">&pound;{{ transfer.credits }}.00 <span class="unit">{{ bank.currency }}</span></div>
+
+    {% if transfer.kind == "unlimited_month" %}
+      <p class="review-lede">
+        Send this to the account below and include the payment reference, so we can match it to
+        your account. Unlimited access (30 days, no credits spent) starts once we've manually
+        confirmed the funds have arrived - please allow some time for this.
       </p>
-      <div style="border-top:1px solid var(--line)">
-        <div style="padding:10px 0; border-bottom:1px solid var(--line)">
-          <p class="text-xs" style="color:var(--muted)">Account number</p>
-          <p class="mono text-sm" style="word-break:break-all">{{ bank.account_number }}</p>
-        </div>
-        <div style="padding:10px 0; border-bottom:1px solid var(--line)">
-          <p class="text-xs" style="color:var(--muted)">IBAN</p>
-          <p class="mono text-sm" style="word-break:break-all">{{ bank.iban }}</p>
-        </div>
-        <div style="padding:10px 0; border-bottom:1px solid var(--line)">
-          <p class="text-xs" style="color:var(--muted)">BIC / SWIFT</p>
-          <p class="mono text-sm" style="word-break:break-all">{{ bank.bic_swift }}</p>
-        </div>
-        <div style="padding:10px 0; border-bottom:1px solid var(--line)">
-          <p class="text-xs" style="color:var(--muted)">Currency</p>
-          <p class="mono text-sm">{{ bank.currency }}</p>
-        </div>
-        <div style="padding:10px 0; border-bottom:1px solid var(--line)">
-          <p class="text-xs" style="color:var(--muted)">Amount</p>
-          <p class="mono text-sm">&pound;{{ transfer.credits }}.00</p>
-        </div>
-        <div style="padding:10px 0">
-          <p class="text-xs" style="color:var(--muted)">Payment reference</p>
-          <p class="mono text-sm" style="word-break:break-all; color:var(--accent-2)">{{ transfer.reference }}</p>
-        </div>
+    {% else %}
+      <p class="review-lede">
+        Send this to the account below and include the payment reference, so we can match it to
+        your account. Credits are added once we've manually confirmed the funds have arrived -
+        please allow some time for this.
+      </p>
+    {% endif %}
+
+    <div class="review-details">
+      <div class="review-detail">
+        <span class="review-detail-label">Account number</span>
+        <span class="review-detail-value">{{ bank.account_number }}</span>
+      </div>
+      <div class="review-detail">
+        <span class="review-detail-label">IBAN</span>
+        <span class="review-detail-value">{{ bank.iban }}</span>
+      </div>
+      <div class="review-detail">
+        <span class="review-detail-label">BIC / SWIFT</span>
+        <span class="review-detail-value">{{ bank.bic_swift }}</span>
+      </div>
+      <div class="review-detail">
+        <span class="review-detail-label">Payment reference</span>
+        <span class="review-detail-value is-accent">{{ transfer.reference }}</span>
       </div>
     </div>
-    <div class="docket-tab">
-      <span class="docket-tab-label">Pending</span>
-    </div>
+
+    <a href="{{ url_for('main.account') }}" class="btn btn-ghost btn-block">Back to account</a>
+
   </div>
-  <a href="{{ url_for('main.account') }}" class="btn btn-ghost btn-block">Back to account</a>
 </div>
 
 {% endblock %}
