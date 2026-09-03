@@ -4,6 +4,7 @@ from sqlalchemy import or_
 from app.clubs import CLUBS, get_club
 from app.extensions import db
 from app.services.link_jobs import run_link_job
+from app.services.manual_link import record_manual_link
 from flask_login import login_required, current_user
 from app.models import CreditTransaction, Match, GeneratedTicket
 from app.utils.csv_tools import generate_template_csv, parse_accounts_csv, CsvValidationError
@@ -114,6 +115,47 @@ def match_generate(slug, match_id):
     club = _get_club_or_404(slug)
     match = _get_match_or_404(slug, match_id)
     return render_template("main/match_generate.html", club=club, match=match)
+
+
+@main_bp.route("/tickets/<slug>/<int:match_id>/manual", methods=["POST"])
+@login_required
+def match_manual_submit(slug, match_id):
+    """For clubs without an automated login API (currently Chelsea and
+    Spurs) - records a ticket link the customer already found by hand,
+    e.g. via linkgen_service/multi_club_linkgen.py. Manchester United
+    keeps using match_generate's existing /api/generate-link flow; this
+    route is untouched by and doesn't touch that one."""
+    club = _get_club_or_404(slug)
+    match = _get_match_or_404(slug, match_id)
+
+    account_email = (request.form.get("account_email") or "").strip()
+    ticket_link = (request.form.get("ticket_link") or "").strip()
+
+    if not account_email or not ticket_link:
+        flash("Enter the Supporter ID/email and the ticket link.", "error")
+        return redirect(url_for("main.match_generate", slug=slug, match_id=match_id))
+
+    result = record_manual_link(
+        current_user.id,
+        {
+            "email": account_email,
+            "match_name": match.name,
+            "link": ticket_link,
+            "club": slug,
+        },
+        current_app.config,
+        event_date=match.kickoff_at,
+    )
+
+    if result.get("success"):
+        if result.get("reused"):
+            flash("That account already has a link for this match - no credit was charged.", "success")
+        else:
+            flash(f"Link recorded for {account_email}. Balance: {result['credits_remaining']} credits.", "success")
+    else:
+        flash(result.get("message", "Couldn't record that link."), "error")
+
+    return redirect(url_for("main.match_generate", slug=slug, match_id=match_id))
 
 
 @main_bp.route("/tickets/<slug>/<int:match_id>/csv-template")

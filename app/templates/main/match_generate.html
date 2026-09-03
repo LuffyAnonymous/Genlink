@@ -62,6 +62,8 @@
 
   <div class="md:col-span-2 space-y-6">
 
+    {% if club.slug == "man-utd" %}
+
     <!-- Ticket generator -->
     <div class="docket fade-up">
 
@@ -144,6 +146,45 @@
       </div>
 
     </div>
+
+    {% else %}
+
+    <!-- Manual link capture (Chelsea, Spurs - no automated login API yet) -->
+    <div class="docket fade-up">
+
+      <div class="docket-body">
+
+        <p class="eyebrow mb-1">Record a ticket link</p>
+        <p class="text-sm mb-5" style="color:var(--muted)">
+          {{ club.name }} isn't wired to automatic login yet. Run the local browser tool
+          (<span class="mono">linkgen_service/multi_club_linkgen.py {{ club.slug }}</span>) to log in
+          yourself and find the link, then paste it below - it's saved exactly like any other
+          generated ticket and still spends 1 credit.
+        </p>
+
+        <form method="POST" action="{{ url_for('main.match_manual_submit', slug=club.slug, match_id=match.id) }}" class="space-y-4">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="field">
+            <label for="manual_account_email">Supporter ID / email</label>
+            <input type="text" id="manual_account_email" name="account_email" placeholder="1245678 or jane@example.com" required autocomplete="off">
+          </div>
+
+          <div class="field">
+            <label for="ticket_link">Ticket link</label>
+            <input type="url" id="ticket_link" name="ticket_link" placeholder="https://..." required autocomplete="off">
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block">
+            Save this link (1 credit)
+          </button>
+        </form>
+
+      </div>
+
+    </div>
+
+    {% endif %}
 
 
     <!--

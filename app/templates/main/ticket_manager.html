@@ -71,7 +71,7 @@
 
   {% for club in clubs %}
 
-    {% if club.slug == "man-utd" %}
+    {% if club.slug in ("man-utd", "chelsea", "spurs") %}
 
       <!-- ACTIVE CLUB -->
       <a

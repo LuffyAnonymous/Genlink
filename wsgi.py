@@ -154,6 +154,54 @@ def add_manutd_fixtures():
         print(f"Added {added} fixture(s). {len(fixtures) - added} already existed and were skipped.")
 
 
+@app.cli.command("add-chelsea-spurs-fixtures")
+def add_chelsea_spurs_fixtures():
+    """Add a handful of Chelsea (Stamford Bridge) and Spurs (Tottenham
+    Hotspur Stadium) HOME fixtures as upcoming matches, same pattern as
+    add-manutd-fixtures - safe to re-run, skips fixtures already present.
+    These two clubs use the manual "record a ticket link" flow, not an
+    automated API, so this only needs enough real matches to test against.
+    Run with: flask --app wsgi.py add-chelsea-spurs-fixtures"""
+    fixtures = [
+        ("chelsea", "Chelsea", "Brighton & Hove Albion", datetime(2026, 8, 29, 15, 0)),
+        ("chelsea", "Chelsea", "Hull City", datetime(2026, 9, 12, 15, 0)),
+        ("chelsea", "Chelsea", "Tottenham Hotspur", datetime(2026, 10, 24, 15, 0)),
+        ("chelsea", "Chelsea", "Manchester United", datetime(2026, 10, 31, 15, 0)),
+        ("chelsea", "Chelsea", "Liverpool", datetime(2026, 12, 5, 15, 0)),
+        ("chelsea", "Chelsea", "Newcastle United", datetime(2027, 1, 2, 15, 0)),
+        ("spurs", "Tottenham Hotspur", "Newcastle United", datetime(2026, 8, 29, 15, 0)),
+        ("spurs", "Tottenham Hotspur", "Everton", datetime(2026, 9, 12, 17, 30)),
+        ("spurs", "Tottenham Hotspur", "Aston Villa", datetime(2026, 9, 19, 12, 30)),
+        ("spurs", "Tottenham Hotspur", "Crystal Palace", datetime(2026, 10, 31, 17, 30)),
+        ("spurs", "Tottenham Hotspur", "Arsenal", datetime(2026, 12, 5, 15, 0)),
+        ("spurs", "Tottenham Hotspur", "AFC Bournemouth", datetime(2026, 12, 26, 15, 0)),
+    ]
+
+    with app.app_context():
+        existing = {
+            (m.club_slug, m.home_team, m.away_team, m.kickoff_at)
+            for m in Match.query.filter(Match.club_slug.in_(["chelsea", "spurs"])).all()
+        }
+
+        added = 0
+        for club_slug, home_team, away_team, kickoff_at in fixtures:
+            if (club_slug, home_team, away_team, kickoff_at) in existing:
+                continue
+            db.session.add(
+                Match(
+                    club_slug=club_slug,
+                    home_team=home_team,
+                    away_team=away_team,
+                    kickoff_at=kickoff_at,
+                    is_active=True,
+                )
+            )
+            added += 1
+
+        db.session.commit()
+        print(f"Added {added} fixture(s). {len(fixtures) - added} already existed and were skipped.")
+
+
 @app.cli.command("check-config")
 def check_config():
     """Quick sanity check of the current .env - catches the mistakes that

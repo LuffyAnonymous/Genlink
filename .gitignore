@@ -16,3 +16,7 @@ linkgen_service/
 # Old project archive - contains a real API key, hardcoded proxy
 # credential, and unrelated business spreadsheets. Never commit this.
 random.zip
+
+# Chelsea/Spurs add-on source archive - already extracted and
+# integrated into linkgen_service/ and app/services/manual_link.py.
+Tixlinx_Chelsea_Spurs_New_File.zip
