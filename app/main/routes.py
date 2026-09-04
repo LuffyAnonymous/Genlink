@@ -199,6 +199,7 @@ def match_bulk_submit(slug, match_id):
 
     results = []
     for account in accounts:
+        account["club"] = slug
         try:
             result = run_link_job(current_user.id, account, current_app.config)
         except Exception as exc:

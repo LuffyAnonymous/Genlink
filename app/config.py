@@ -1,6 +1,8 @@
 import os
 from dotenv import load_dotenv
 
+from app.clubs import CLUBS
+
 load_dotenv()
 
 
@@ -54,9 +56,27 @@ class Config:
     }
 
     # --- Link generation API (your existing ticket-link generator) ---
+    # LINKGEN_API_URL/KEY below are the default (currently Man Utd's).
+    # Any other club can plug in its own automation independently, without
+    # touching this file or the shared app code at all, by setting
+    # LINKGEN_API_URL_<SLUG> / LINKGEN_API_KEY_<SLUG> in .env - slug
+    # uppercased with hyphens turned to underscores, e.g. a service for
+    # "aston-villa" is LINKGEN_API_URL_ASTON_VILLA. call_link_generation_api()
+    # looks up the club from the request payload and uses that club's
+    # override if one is set, falling back to LINKGEN_API_URL/KEY otherwise.
     LINKGEN_API_URL = os.environ.get("LINKGEN_API_URL", "http://127.0.0.1:4000/api/manutd")
     LINKGEN_API_KEY = os.environ.get("LINKGEN_API_KEY")
     LINKGEN_COST_CREDITS = int(os.environ.get("LINKGEN_COST_CREDITS", 1))
+
+    LINKGEN_CLUBS = {}
+    for _club in CLUBS:
+        _env_slug = _club["slug"].upper().replace("-", "_")
+        _club_url = os.environ.get(f"LINKGEN_API_URL_{_env_slug}")
+        if _club_url:
+            LINKGEN_CLUBS[_club["slug"]] = {
+                "url": _club_url,
+                "key": os.environ.get(f"LINKGEN_API_KEY_{_env_slug}"),
+            }
 
     # Local-dev-only shortcut: when on, run_link_job() will hand out a link
     # straight from the `tickets` table (seeded by `flask seed-db`) instead

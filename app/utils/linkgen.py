@@ -54,8 +54,12 @@ def _parse_event_date(value):
 
 
 def call_link_generation_api(payload: dict, app_config) -> LinkGenResult:
-    url = app_config["LINKGEN_API_URL"]
-    api_key = app_config["LINKGEN_API_KEY"]
+    # Each club can run its own independent automation service - see
+    # LINKGEN_CLUBS in app/config.py. Falls back to LINKGEN_API_URL/KEY
+    # (Man Utd's) when the requested club has no override configured.
+    club_override = app_config.get("LINKGEN_CLUBS", {}).get(payload.get("club"), {})
+    url = club_override.get("url") or app_config["LINKGEN_API_URL"]
+    api_key = club_override.get("key") or app_config["LINKGEN_API_KEY"]
 
     if not url:
         return LinkGenResult(False, None, {"error": "LINKGEN_API_URL is not configured"})
