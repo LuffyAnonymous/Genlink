@@ -128,10 +128,25 @@ def stripe_webhook():
         current_app.logger.warning("Rejected webhook: invalid payload/signature (%s)", exc)
         return "", 400
 
-    if event["type"] != "checkout.session.completed":
+    # checkout.session.completed fires as soon as the customer finishes
+    # checkout - for instant methods (card) that means paid, but Stripe
+    # also offers delayed methods where the session "completes" while the
+    # payment is still processing (payment_status stays "unpaid" until
+    # Stripe later sends async_payment_succeeded/failed). Fulfilling on
+    # .completed alone without checking payment_status would grant credits
+    # before the money has actually arrived on those methods.
+    if event["type"] not in ("checkout.session.completed", "checkout.session.async_payment_succeeded"):
         return "", 200  # not an event we care about - acknowledge and ignore
 
-    session = event["data"]["object"]
+    # The Stripe SDK's event objects only support bracket/attribute access,
+    # not .get() - calling .get() directly on one raises AttributeError,
+    # crashing this handler on every real delivery. .to_dict() converts it
+    # (recursively, including `metadata`) to a plain dict first.
+    session = event["data"]["object"].to_dict()
+
+    if session.get("payment_status") != "paid":
+        return "", 200  # still processing - the async_payment_succeeded event will fulfill it once it lands
+
     reference = session.get("client_reference_id") or (session.get("metadata") or {}).get("reference")
 
     if not reference:

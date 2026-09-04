@@ -69,10 +69,12 @@ they were, just under the new table name.
 4. **Once deploying for real**: register a webhook endpoint in the
    Stripe Dashboard -> Developers -> Webhooks, pointed at
    `https://<real-domain>/credits/webhook/stripe`, subscribed to
-   `checkout.session.completed` - that gives you the production
-   `whsec_...` to put in the real `.env`. Switch `STRIPE_SECRET_KEY` /
-   `STRIPE_PUBLISHABLE_KEY` to the `sk_live_...` / `pk_live_...` keys only
-   once everything above has been verified working in test mode.
+   **both** `checkout.session.completed` **and**
+   `checkout.session.async_payment_succeeded` (see the payment_status note
+   below for why both) - that gives you the production `whsec_...` to put
+   in the real `.env`. Switch `STRIPE_SECRET_KEY` / `STRIPE_PUBLISHABLE_KEY`
+   to the `sk_live_...` / `pk_live_...` keys only once everything above has
+   been verified working in test mode.
 
 ## Security properties (already built in, worth knowing)
 
@@ -83,6 +85,14 @@ they were, just under the new table name.
   events, and a duplicate delivery for an already-confirmed payment is a
   no-op (checked with the same row-lock pattern the old bank-transfer
   code used).
+- `checkout.session.completed` fires as soon as checkout finishes, which
+  for a delayed payment method (e.g. certain bank debits) is *before* the
+  money has actually arrived - `payment_status` stays `"unpaid"` until
+  Stripe later sends `checkout.session.async_payment_succeeded`. The
+  webhook checks `payment_status == "paid"` before fulfilling anything, so
+  a still-processing delayed payment can't grant credits early - it just
+  waits for the async event, which fires once the payment genuinely
+  clears.
 - `/credits/return/<reference>` (what the customer's browser sees) never
   grants credits - only the webhook does. That route can be visited,
   refreshed, or guessed at without ever producing free credits.
