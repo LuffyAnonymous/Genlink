@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Confirming payment - Genlinklab{% endblock %}
+{% block content %}
+
+<div class="max-w-md mx-auto text-center">
+  <div class="stamp is-pending">
+    <span class="stamp-label">Pending</span>
+  </div>
+  <p class="eyebrow mb-3">Status: confirming</p>
+  <h1 class="display text-3xl mb-4">Payment received - confirming now</h1>
+  <p class="text-sm mb-6" style="color:var(--muted)">
+    Stripe is finishing up on our end - this usually takes a few seconds. Reference {{ transfer.reference }}.
+  </p>
+  <a href="{{ url_for('main.account') }}" class="btn btn-ghost">Check your account</a>
+</div>
+
+{% endblock %}

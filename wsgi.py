@@ -202,6 +202,58 @@ def add_chelsea_spurs_fixtures():
         print(f"Added {added} fixture(s). {len(fixtures) - added} already existed and were skipped.")
 
 
+@app.cli.command("migrate-stripe-billing")
+def migrate_stripe_billing():
+    """One-time migration for the bank-transfer -> Stripe billing switch:
+    renames the bank_transfer_requests table to payment_requests, renames
+    credit_transactions.bank_reference to payment_reference, and adds the
+    two new stripe_* columns. Safe to re-run - every step checks first and
+    skips if already done. All existing rows (including past confirmed
+    bank-transfer payments) are kept - nothing is dropped or reset.
+    Run with: flask --app wsgi.py migrate-stripe-billing"""
+    from sqlalchemy import inspect, text
+
+    with app.app_context():
+        def table_names():
+            return inspect(db.engine).get_table_names()
+
+        def column_names(table):
+            return {c["name"] for c in inspect(db.engine).get_columns(table)}
+
+        names = table_names()
+
+        if "bank_transfer_requests" in names and "payment_requests" not in names:
+            with db.engine.begin() as conn:
+                conn.execute(text("ALTER TABLE bank_transfer_requests RENAME TO payment_requests"))
+            print("Renamed bank_transfer_requests -> payment_requests.")
+        elif "payment_requests" in names:
+            print("payment_requests already exists - skipping table rename.")
+        else:
+            print("No existing bank_transfer_requests table - nothing to rename (fresh database).")
+
+        if "payment_requests" in table_names():
+            cols = column_names("payment_requests")
+            with db.engine.begin() as conn:
+                if "stripe_checkout_session_id" not in cols:
+                    conn.execute(text("ALTER TABLE payment_requests ADD COLUMN stripe_checkout_session_id VARCHAR(255)"))
+                    print("Added payment_requests.stripe_checkout_session_id.")
+                if "stripe_payment_intent_id" not in cols:
+                    conn.execute(text("ALTER TABLE payment_requests ADD COLUMN stripe_payment_intent_id VARCHAR(255)"))
+                    print("Added payment_requests.stripe_payment_intent_id.")
+
+        if "credit_transactions" in table_names():
+            cols = column_names("credit_transactions")
+            if "bank_reference" in cols and "payment_reference" not in cols:
+                with db.engine.begin() as conn:
+                    conn.execute(text("ALTER TABLE credit_transactions RENAME COLUMN bank_reference TO payment_reference"))
+                print("Renamed credit_transactions.bank_reference -> payment_reference.")
+            elif "payment_reference" in cols:
+                print("credit_transactions.payment_reference already exists - skipping.")
+
+        db.create_all()  # fills in payment_requests (and anything else) if this is a brand-new database
+        print("Migration complete.")
+
+
 @app.cli.command("check-config")
 def check_config():
     """Quick sanity check of the current .env - catches the mistakes that
@@ -242,6 +294,15 @@ def check_config():
 
     if not app.config.get("LINKGEN_API_KEY"):
         warnings.append("LINKGEN_API_KEY is not set.")
+
+    stripe_secret = app.config.get("STRIPE_SECRET_KEY") or ""
+    if not stripe_secret or "replace" in stripe_secret.lower():
+        problems.append("STRIPE_SECRET_KEY looks unset/placeholder - checkout will fail.")
+    elif stripe_secret.startswith("sk_live_"):
+        warnings.append("STRIPE_SECRET_KEY is a LIVE key - real money will be charged.")
+
+    if not app.config.get("STRIPE_WEBHOOK_SECRET"):
+        problems.append("STRIPE_WEBHOOK_SECRET is not set - the webhook will reject every event Stripe sends.")
 
     if not app.config.get("SESSION_COOKIE_SECURE"):
         warnings.append("SESSION_COOKIE_SECURE is off - correct for local http://, must be on anywhere real.")

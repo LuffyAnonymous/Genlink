@@ -40,7 +40,7 @@ CREATE TABLE users (
 );
 CREATE UNIQUE INDEX ix_users_email ON users (email);
 
-CREATE TABLE bank_transfer_requests (
+CREATE TABLE payment_requests (
 	id SERIAL NOT NULL,
 	user_id INTEGER NOT NULL,
 	credits INTEGER NOT NULL,
@@ -48,26 +48,29 @@ CREATE TABLE bank_transfer_requests (
 	reference VARCHAR(32) NOT NULL,
 	token VARCHAR(64) NOT NULL,
 	status VARCHAR(20) NOT NULL,
-	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, 
-	confirmed_at TIMESTAMP WITHOUT TIME ZONE, 
-	PRIMARY KEY (id), 
+	stripe_checkout_session_id VARCHAR(255),
+	stripe_payment_intent_id VARCHAR(255),
+	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+	confirmed_at TIMESTAMP WITHOUT TIME ZONE,
+	PRIMARY KEY (id),
 	FOREIGN KEY(user_id) REFERENCES users (id)
 );
-CREATE UNIQUE INDEX ix_bank_transfer_requests_token ON bank_transfer_requests (token);
-CREATE UNIQUE INDEX ix_bank_transfer_requests_reference ON bank_transfer_requests (reference);
+CREATE UNIQUE INDEX ix_payment_requests_token ON payment_requests (token);
+CREATE UNIQUE INDEX ix_payment_requests_reference ON payment_requests (reference);
+CREATE UNIQUE INDEX ix_payment_requests_stripe_checkout_session_id ON payment_requests (stripe_checkout_session_id);
 
 CREATE TABLE credit_transactions (
-	id SERIAL NOT NULL, 
-	user_id INTEGER NOT NULL, 
-	type VARCHAR(20) NOT NULL, 
-	amount INTEGER NOT NULL, 
-	description VARCHAR(255), 
-	bank_reference VARCHAR(255), 
-	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, 
-	PRIMARY KEY (id), 
+	id SERIAL NOT NULL,
+	user_id INTEGER NOT NULL,
+	type VARCHAR(20) NOT NULL,
+	amount INTEGER NOT NULL,
+	description VARCHAR(255),
+	payment_reference VARCHAR(255),
+	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+	PRIMARY KEY (id),
 	FOREIGN KEY(user_id) REFERENCES users (id)
 );
-CREATE UNIQUE INDEX ix_credit_transactions_bank_reference ON credit_transactions (bank_reference);
+CREATE UNIQUE INDEX ix_credit_transactions_payment_reference ON credit_transactions (payment_reference);
 
 CREATE TABLE generated_tickets (
 	id SERIAL NOT NULL, 

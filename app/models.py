@@ -34,8 +34,8 @@ class User(db.Model, UserMixin):
     transactions = db.relationship(
         "CreditTransaction", backref="user", lazy=True, cascade="all, delete-orphan"
     )
-    bank_transfer_requests = db.relationship(
-        "BankTransferRequest", backref="user", lazy=True, cascade="all, delete-orphan"
+    payment_requests = db.relationship(
+        "PaymentRequest", backref="user", lazy=True, cascade="all, delete-orphan"
     )
     link_logs = db.relationship(
         "LinkGenerationLog", backref="user", lazy=True, cascade="all, delete-orphan"
@@ -72,16 +72,17 @@ class CreditTransaction(db.Model):
     type = db.Column(db.String(20), nullable=False)  # purchase | consume | refund
     amount = db.Column(db.Integer, nullable=False)  # positive for purchase, negative for consume
     description = db.Column(db.String(255), nullable=True)
-    bank_reference = db.Column(db.String(255), unique=True, nullable=True, index=True)
+    payment_reference = db.Column(db.String(255), unique=True, nullable=True, index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
 
-class BankTransferRequest(db.Model):
-    """A customer's declared intent to pay by bank transfer. Credits are only
-    added once an admin manually confirms the funds arrived (via the emailed
-    confirm link) - there is no automated way to verify a bank transfer."""
+class PaymentRequest(db.Model):
+    """A customer's checkout attempt, paid via Stripe. Credits (or unlimited
+    access) are only ever added by the Stripe webhook once payment actually
+    succeeds - never by the browser redirect back to our site, since that
+    can be skipped, replayed, or spoofed."""
 
-    __tablename__ = "bank_transfer_requests"
+    __tablename__ = "payment_requests"
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
@@ -94,6 +95,8 @@ class BankTransferRequest(db.Model):
     reference = db.Column(db.String(32), unique=True, nullable=False, index=True)
     token = db.Column(db.String(64), unique=True, nullable=False, index=True)
     status = db.Column(db.String(20), default="pending", nullable=False)  # pending | confirmed
+    stripe_checkout_session_id = db.Column(db.String(255), unique=True, nullable=True, index=True)
+    stripe_payment_intent_id = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     confirmed_at = db.Column(db.DateTime, nullable=True)
 

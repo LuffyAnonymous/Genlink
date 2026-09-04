@@ -44,14 +44,14 @@ class Config:
     ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@genlinklab.co.uk")
     REGISTRATION_TOKEN_EXPIRY_DAYS = int(os.environ.get("REGISTRATION_TOKEN_EXPIRY_DAYS", 7))
 
-    # --- Bank transfer (manual) ---
-    CREDIT_PRICE_GBP_PENCE = 100  # 1 credit = GBP 1.00, fixed per the spec
-    BANK_TRANSFER_DETAILS = {
-        "account_number": os.environ.get("BANK_ACCOUNT_NUMBER"),
-        "iban": os.environ.get("BANK_IBAN"),
-        "currency": os.environ.get("BANK_CURRENCY", "GBP"),
-        "bic_swift": os.environ.get("BANK_BIC_SWIFT"),
-    }
+    # --- Stripe (credit/unlimited-pass checkout) ---
+    # Test-mode keys (sk_test_.../whsec_...) for local dev; swap for live
+    # keys (sk_live_...) only in production. Never hard-code these -
+    # STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET must only ever live in
+    # .env (gitignored), same as LINKGEN_API_KEY.
+    STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY")
+    STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY")
+    STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET")
 
     # --- Link generation API (your existing ticket-link generator) ---
     LINKGEN_API_URL = os.environ.get("LINKGEN_API_URL", "http://127.0.0.1:4000/api/manutd")

@@ -28,23 +28,9 @@ def send_user_welcome_email(user):
     mail.send(msg)
 
 
-def send_admin_bank_transfer_email(user, transfer, confirm_url):
-    """Sent to admin@genlinklab.co.uk when a customer declares they're
-    sending a bank transfer, with a one-click link to confirm receipt and
-    credit the account."""
-    msg = Message(
-        subject=f"Bank transfer expected - {user.name} ({transfer.reference})",
-        recipients=[current_app.config["ADMIN_EMAIL"]],
-    )
-    msg.html = render_template(
-        "emails/admin_bank_transfer.html", user=user, transfer=transfer, confirm_url=confirm_url
-    )
-    mail.send(msg)
-
-
 def send_user_credits_added_email(user, transfer):
-    """Sent to the customer once the admin has confirmed their bank transfer
-    arrived and credited their account."""
+    """Sent to the customer once Stripe confirms their payment succeeded
+    (triggered from the /credits/webhook/stripe handler)."""
     msg = Message(
         subject="Your Genlinklab credits have been added",
         recipients=[user.email],
