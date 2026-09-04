@@ -1,7 +1,7 @@
 from flask import Flask, flash, redirect, request, url_for, jsonify
 from werkzeug.middleware.proxy_fix import ProxyFix
 from app.config import Config
-from app.extensions import db, login_manager, mail, csrf, limiter
+from app.extensions import db, login_manager, csrf, limiter
 
 
 def create_app(config_class=Config):
@@ -16,7 +16,6 @@ def create_app(config_class=Config):
 
     db.init_app(app)
     login_manager.init_app(app)
-    mail.init_app(app)
     csrf.init_app(app)
     limiter.init_app(app)
 

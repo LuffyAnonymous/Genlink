@@ -29,18 +29,12 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True}
 
-    # --- Mail (used for the admin registration-confirmation email + user welcome email)
-    MAIL_SERVER = os.environ.get("MAIL_SERVER", "smtp.mail.us-east-1.awsapps.com")
-    MAIL_PORT = int(os.environ.get("MAIL_PORT", 465))
-
-    MAIL_USE_TLS = _env_bool("MAIL_USE_TLS", False)
-    MAIL_USE_SSL = _env_bool("MAIL_USE_SSL", True)
-
-    MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "admin@genlinklab.co.uk")
-    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
-
+    # --- Mail (admin registration-confirmation email + user welcome email) ---
+    # Sent via Resend's HTTP API (app/utils/email.py), not SMTP - most PaaS
+    # hosts (Render included) block outbound SMTP entirely to prevent spam
+    # abuse, which no SMTP port/credential change can work around.
+    RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
     MAIL_DEFAULT_SENDER = os.environ.get("MAIL_DEFAULT_SENDER", "Genlinklab <admin@genlinklab.co.uk>")
-
     MAIL_SUPPRESS_SEND = _env_bool("MAIL_SUPPRESS_SEND", False)
 
     ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@genlinklab.co.uk")

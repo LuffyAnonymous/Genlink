@@ -267,15 +267,9 @@ def check_config():
     if app.config.get("MAIL_SUPPRESS_SEND"):
         warnings.append("MAIL_SUPPRESS_SEND is true - no emails are actually being sent right now.")
 
-    mail_password = app.config.get("MAIL_PASSWORD") or ""
-    mail_server = app.config.get("MAIL_SERVER") or ""
-    if not mail_password or "unused" in mail_password.lower() or "replace" in mail_password.lower():
-        problems.append("MAIL_PASSWORD looks unset/placeholder - mail will fail to send.")
-    elif "gmail.com" in mail_server and " " not in mail_password and len(mail_password) != 16:
-        problems.append(
-            "MAIL_PASSWORD doesn't look like a Gmail App Password (16 characters) - "
-            "if this is your regular account password, Gmail will reject it."
-        )
+    resend_key = app.config.get("RESEND_API_KEY") or ""
+    if not resend_key or "replace" in resend_key.lower():
+        problems.append("RESEND_API_KEY looks unset/placeholder - mail will fail to send.")
 
     if app.config.get("SECRET_KEY") == "dev-secret-change-me":
         problems.append("SECRET_KEY is the dev default - must be a real random value anywhere but local dev.")
