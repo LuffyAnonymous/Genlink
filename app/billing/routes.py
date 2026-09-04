@@ -1,12 +1,14 @@
 import secrets
 from datetime import datetime, timedelta
 
+import stripe
 from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
+
 from flask_login import login_required, current_user
 
-from app.extensions import db
-from app.models import User, CreditTransaction, BankTransferRequest
-from app.utils.email import send_admin_bank_transfer_email, send_user_credits_added_email
+from app.extensions import db, csrf
+from app.models import User, CreditTransaction, PaymentRequest
+from app.utils.email import send_user_credits_added_email
 
 billing_bp = Blueprint("billing", __name__)
 
@@ -23,18 +25,18 @@ def buy_credits_page():
         "billing/buy_credits.html",
         presets=PRESET_PACKAGES,
         unlimited_price=UNLIMITED_MONTH_PRICE,
-        bank=current_app.config["BANK_TRANSFER_DETAILS"],
     )
 
 
 @billing_bp.route("/checkout", methods=["POST"])
 @login_required
-def create_transfer_request():
+def create_checkout_session():
     product = request.form.get("product", "credits")
 
     if product == "unlimited_month":
         kind = "unlimited_month"
         credits = UNLIMITED_MONTH_PRICE
+        product_name = f"Genlinklab unlimited access ({UNLIMITED_MONTH_DAYS} days)"
     else:
         kind = "credits"
         try:
@@ -46,97 +48,126 @@ def create_transfer_request():
             flash("Enter a valid number of credits (1-10,000).", "error")
             return redirect(url_for("billing.buy_credits_page"))
 
-    transfer = BankTransferRequest(
+        product_name = f"{credits} Genlinklab credit(s)"
+
+    payment = PaymentRequest(
         user_id=current_user.id,
         credits=credits,
         kind=kind,
         reference=f"TS-{secrets.token_hex(4).upper()}",
         token=secrets.token_urlsafe(32),
     )
-    db.session.add(transfer)
+    db.session.add(payment)
     db.session.commit()
 
-    confirm_url = url_for("billing.confirm_transfer", token=transfer.token, _external=True)
+    stripe.api_key = current_app.config["STRIPE_SECRET_KEY"]
+
     try:
-        send_admin_bank_transfer_email(current_user, transfer, confirm_url)
-    except Exception as exc:  # noqa: BLE001 - surface but don't crash the request
-        current_app.logger.error("Failed to send admin bank transfer email: %s", exc)
-        flash(
-            "Your request was saved, but we couldn't notify our admin automatically. "
-            "Please contact support with your payment reference once you've sent the transfer.",
-            "error",
+        session = stripe.checkout.Session.create(
+            mode="payment",
+            line_items=[{
+                "price_data": {
+                    "currency": "gbp",
+                    "product_data": {"name": product_name},
+                    "unit_amount": credits * 100,  # Stripe wants pence, not pounds
+                },
+                "quantity": 1,
+            }],
+            client_reference_id=payment.reference,
+            metadata={"reference": payment.reference, "user_id": current_user.id, "kind": kind},
+            success_url=url_for("billing.stripe_return", reference=payment.reference, _external=True),
+            cancel_url=url_for("billing.buy_credits_page", _external=True),
         )
+    except stripe.error.StripeError as exc:
+        current_app.logger.error("Stripe checkout session creation failed: %s", exc)
+        flash("Couldn't start checkout - please try again shortly.", "error")
+        return redirect(url_for("billing.buy_credits_page"))
 
-    return redirect(url_for("billing.transfer_pending", reference=transfer.reference))
+    payment.stripe_checkout_session_id = session.id
+    db.session.commit()
+
+    return redirect(session.url, code=303)
 
 
-@billing_bp.route("/pending/<reference>")
+@billing_bp.route("/return/<reference>")
 @login_required
-def transfer_pending(reference):
-    transfer = BankTransferRequest.query.filter_by(
+def stripe_return(reference):
+    """Where Stripe sends the customer back after checkout. Only ever
+    displays status - never grants credits itself, since that would let
+    anyone who guesses/replays this URL get free credits. The webhook
+    below is the only place that actually confirms a payment."""
+    payment = PaymentRequest.query.filter_by(
         reference=reference, user_id=current_user.id
     ).first_or_404()
-    return render_template(
-        "billing/transfer_pending.html",
-        transfer=transfer,
-        bank=current_app.config["BANK_TRANSFER_DETAILS"],
-    )
+
+    if payment.status == "confirmed":
+        return render_template("billing/transfer_confirmed.html", transfer=payment, already=False)
+
+    # Rare race: the browser redirect landed before Stripe's webhook call
+    # did. It'll confirm within moments - this just says so.
+    return render_template("billing/stripe_processing.html", transfer=payment)
 
 
-@billing_bp.route("/admin/confirm/<token>", methods=["GET", "POST"])
-def confirm_transfer(token):
-    """Admin clicks this from the notification email once the bank transfer
-    has actually landed in the account - credits are only ever added here,
-    never automatically, since a bank transfer can't be verified in-app.
+@billing_bp.route("/webhook/stripe", methods=["POST"])
+@csrf.exempt  # Stripe calls this server-to-server - there's no browser session/CSRF cookie to check
+def stripe_webhook():
+    """Stripe's server calls this directly when a payment's status
+    changes. The signature check below is the only thing authenticating
+    this request - without it, anyone could POST a fake "payment
+    succeeded" event and get free credits, so it is never optional."""
+    stripe.api_key = current_app.config["STRIPE_SECRET_KEY"]
 
-    GET only ever displays the pending transfer, so a mail scanner or
-    link-preview bot fetching this URL from the admin's inbox can't
-    silently add credits - the admin has to submit the form below (a real
-    POST) for anything to happen."""
-    transfer = BankTransferRequest.query.filter_by(token=token).first()
+    payload = request.get_data()
+    sig_header = request.headers.get("Stripe-Signature", "")
 
-    if not transfer:
-        return render_template("billing/confirm_invalid.html"), 400
-
-    if transfer.status == "confirmed":
-        return render_template("billing/transfer_confirmed.html", transfer=transfer, already=True)
-
-    if request.method == "GET":
-        return render_template(
-            "billing/confirm_transfer.html", transfer=transfer, bank=current_app.config["BANK_TRANSFER_DETAILS"]
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, current_app.config["STRIPE_WEBHOOK_SECRET"]
         )
+    except (ValueError, stripe.error.SignatureVerificationError) as exc:
+        current_app.logger.warning("Rejected webhook: invalid payload/signature (%s)", exc)
+        return "", 400
 
-    # Lock the transfer row itself so a double-submit (or two admins
-    # confirming at once) can't both pass the status check above and add
-    # credits twice - the second one blocks here, then sees "confirmed"
-    # once the first commits.
-    transfer = BankTransferRequest.query.with_for_update().filter_by(token=token).first()
-    if not transfer:
-        return render_template("billing/confirm_invalid.html"), 400
-    if transfer.status == "confirmed":
-        return render_template("billing/transfer_confirmed.html", transfer=transfer, already=True)
+    if event["type"] != "checkout.session.completed":
+        return "", 200  # not an event we care about - acknowledge and ignore
 
-    user = db.session.query(User).with_for_update().get(transfer.user_id)
+    session = event["data"]["object"]
+    reference = session.get("client_reference_id") or (session.get("metadata") or {}).get("reference")
 
-    if transfer.kind == "unlimited_month":
-        # Extend from the current expiry if they're already unlimited and
-        # it hasn't lapsed yet, otherwise start the 30 days from now.
+    if not reference:
+        current_app.logger.error("Webhook checkout.session.completed had no reference - session %s", session.get("id"))
+        return "", 200  # nothing we can look up - acknowledge so Stripe doesn't retry forever
+
+    # Row lock so a duplicate webhook delivery for the same event (Stripe
+    # explicitly says these can happen and to handle them idempotently)
+    # can't credit the account twice.
+    payment = PaymentRequest.query.with_for_update().filter_by(reference=reference).first()
+    if not payment:
+        current_app.logger.error("Webhook referenced unknown PaymentRequest %s", reference)
+        return "", 200
+
+    if payment.status == "confirmed":
+        return "", 200  # already handled - this is a duplicate delivery
+
+    user = db.session.query(User).with_for_update().get(payment.user_id)
+
+    if payment.kind == "unlimited_month":
         base = user.unlimited_until if user.has_unlimited else datetime.utcnow()
         user.unlimited_until = base + timedelta(days=UNLIMITED_MONTH_DAYS)
         transaction_description = (
-            f"Unlimited access for {UNLIMITED_MONTH_DAYS} days via bank transfer "
-            f"(£{transfer.credits}, {transfer.reference})"
+            f"Unlimited access for {UNLIMITED_MONTH_DAYS} days via Stripe (£{payment.credits}, {payment.reference})"
         )
         transaction_amount = 0
         transaction_type = "unlimited"
     else:
-        user.credits += transfer.credits
-        transaction_description = f"Purchased {transfer.credits} credit(s) via bank transfer ({transfer.reference})"
-        transaction_amount = transfer.credits
+        user.credits += payment.credits
+        transaction_description = f"Purchased {payment.credits} credit(s) via Stripe ({payment.reference})"
+        transaction_amount = payment.credits
         transaction_type = "purchase"
 
-    transfer.status = "confirmed"
-    transfer.confirmed_at = datetime.utcnow()
+    payment.status = "confirmed"
+    payment.confirmed_at = datetime.utcnow()
+    payment.stripe_payment_intent_id = session.get("payment_intent")
 
     db.session.add(user)
     db.session.add(
@@ -145,14 +176,14 @@ def confirm_transfer(token):
             type=transaction_type,
             amount=transaction_amount,
             description=transaction_description,
-            bank_reference=transfer.reference,
+            payment_reference=payment.reference,
         )
     )
     db.session.commit()
 
     try:
-        send_user_credits_added_email(user, transfer)
+        send_user_credits_added_email(user, payment)
     except Exception as exc:  # noqa: BLE001
         current_app.logger.error("Failed to send credits-added email: %s", exc)
 
-    return render_template("billing/transfer_confirmed.html", transfer=transfer, already=False)
+    return "", 200

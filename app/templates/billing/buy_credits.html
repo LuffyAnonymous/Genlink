@@ -13,7 +13,7 @@
     {% endif %}
   </p>
 
-  <form method="POST" action="{{ url_for('billing.create_transfer_request') }}" id="buy-form">
+  <form method="POST" action="{{ url_for('billing.create_checkout_session') }}" id="buy-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="product" id="product-field" value="credits">
 
@@ -50,10 +50,10 @@
       <span class="display text-2xl" style="white-space:nowrap">&pound;{{ unlimited_price }}</span>
     </label>
 
-    <button type="submit" class="btn btn-primary btn-block">Get bank transfer details</button>
+    <button type="submit" class="btn btn-primary btn-block">Continue to payment</button>
     <p class="text-xs text-center mt-3" style="color:var(--muted)">
-      We'll show you our bank details and a payment reference. Credits (or unlimited access) are
-      added once we've manually confirmed your transfer has arrived.
+      You'll pay securely with Stripe. Credits (or unlimited access) are added automatically the
+      moment payment succeeds.
     </p>
   </form>
 </div>

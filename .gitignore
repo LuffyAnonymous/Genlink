@@ -20,3 +20,4 @@ random.zip
 # Chelsea/Spurs add-on source archive - already extracted and
 # integrated into linkgen_service/ and app/services/manual_link.py.
 Tixlinx_Chelsea_Spurs_New_File.zip
+.playwright-mcp/
