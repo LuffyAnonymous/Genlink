@@ -167,7 +167,7 @@
         </div>
       {% endfor %}
     </div>
-    <p class="text-sm" id="match-list-empty" hidden style="color:var(--muted)">No matches for that club.</p>
+    <p class="text-sm" id="match-list-empty" style="color:var(--muted); display:none">No matches for that club.</p>
     <script>
       document.getElementById("match-club-filter").addEventListener("change", function () {
         var slug = this.value;
@@ -175,10 +175,13 @@
         var visibleCount = 0;
         rows.forEach(function (row) {
           var show = !slug || row.dataset.clubSlug === slug;
-          row.hidden = !show;
+          // Inline style, not the `hidden` attribute - this page's .flex
+          // utility class also sets `display`, and an author stylesheet
+          // class always beats the browser's default [hidden] styling.
+          row.style.display = show ? "" : "none";
           if (show) visibleCount++;
         });
-        document.getElementById("match-list-empty").hidden = visibleCount !== 0;
+        document.getElementById("match-list-empty").style.display = visibleCount === 0 ? "" : "none";
       });
     </script>
   {% else %}
