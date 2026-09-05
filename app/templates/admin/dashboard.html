@@ -138,23 +138,20 @@
     <p class="text-xs mt-2" style="color:var(--muted)">Always added as this club's home fixture - tickets for an away game aren't sold through this club's own automation.</p>
   </div>
 
-  <form method="GET" action="{{ url_for('admin.dashboard') }}" class="flex items-end gap-3 mb-4">
-    <div class="field" style="max-width:200px">
-      <label>Filter by club</label>
-      <select name="club" style="width:100%; background:var(--paper-raised); border:1px solid var(--line); color:var(--ink); padding:0.7rem 0.85rem; border-radius:var(--radius-sm); font-size:0.95rem; font-family:var(--font-body);">
-        <option value="">All clubs</option>
-        {% for club in clubs %}
-          <option value="{{ club.slug }}" {{ 'selected' if match_club == club.slug else '' }}>{{ club.name }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <button type="submit" class="btn btn-ghost">Filter</button>
-  </form>
+  <div class="field mb-4" style="max-width:200px">
+    <label>Filter by club</label>
+    <select id="match-club-filter" style="width:100%; background:var(--paper-raised); border:1px solid var(--line); color:var(--ink); padding:0.7rem 0.85rem; border-radius:var(--radius-sm); font-size:0.95rem; font-family:var(--font-body);">
+      <option value="">All clubs</option>
+      {% for club in clubs %}
+        <option value="{{ club.slug }}">{{ club.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
 
   {% if matches %}
-    <div class="space-y-2">
+    <div class="space-y-2" id="match-list">
       {% for match in matches %}
-        <div class="ticket-row {{ 'is-ok' if match.is_active else 'is-fail' }} flex items-center justify-between flex-wrap gap-3">
+        <div class="ticket-row {{ 'is-ok' if match.is_active else 'is-fail' }} flex items-center justify-between flex-wrap gap-3" data-club-slug="{{ match.club_slug }}">
           <div class="min-w-0">
             <p class="text-sm font-medium">{{ match.name }}</p>
             <p class="text-xs mt-1" style="color:var(--muted)">
@@ -170,8 +167,22 @@
         </div>
       {% endfor %}
     </div>
+    <p class="text-sm" id="match-list-empty" hidden style="color:var(--muted)">No matches for that club.</p>
+    <script>
+      document.getElementById("match-club-filter").addEventListener("change", function () {
+        var slug = this.value;
+        var rows = document.querySelectorAll("#match-list [data-club-slug]");
+        var visibleCount = 0;
+        rows.forEach(function (row) {
+          var show = !slug || row.dataset.clubSlug === slug;
+          row.hidden = !show;
+          if (show) visibleCount++;
+        });
+        document.getElementById("match-list-empty").hidden = visibleCount !== 0;
+      });
+    </script>
   {% else %}
-    <p class="text-sm" style="color:var(--muted)">{{ 'No matches for that club yet.' if match_club else 'No matches yet.' }}</p>
+    <p class="text-sm" style="color:var(--muted)">No matches yet.</p>
   {% endif %}
 </div>
 

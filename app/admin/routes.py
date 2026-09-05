@@ -30,19 +30,15 @@ def dashboard():
         User.query.filter_by(is_approved=False).order_by(User.created_at.asc()).all()
     )
     all_users = User.query.order_by(User.created_at.desc()).all()
-
-    match_club = (request.args.get("club") or "").strip()
-    match_query = Match.query
-    if match_club and get_club(match_club):
-        match_query = match_query.filter_by(club_slug=match_club)
-    matches = match_query.order_by(Match.club_slug.asc(), Match.kickoff_at.asc().nullslast()).all()
+    matches = (
+        Match.query.order_by(Match.club_slug.asc(), Match.kickoff_at.asc().nullslast()).all()
+    )
 
     return render_template(
         "admin/dashboard.html",
         pending_users=pending_users,
         all_users=all_users,
         matches=matches,
-        match_club=match_club,
         clubs=CLUBS,
     )
 
