@@ -61,4 +61,35 @@ def create_app(config_class=Config):
         flash("Too many attempts - please wait a minute and try again.", "error")
         return redirect(request.referrer or url_for("main.index"))
 
+    @app.after_request
+    def set_security_headers(response):
+        # HSTS only means anything - and is only sent - over an actual HTTPS
+        # response; browsers ignore it entirely over plain http://, so this
+        # is a no-op in local dev without needing a separate flag for it.
+        if request.is_secure:
+            response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        # Registration-confirm and payment-return URLs carry sensitive
+        # tokens in the query string - this keeps them from leaking to a
+        # third-party site's server logs via the Referer header on an
+        # outbound link (e.g. the "Contact support" mailto, ticket links).
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        # Templates rely on inline <script> blocks and Tailwind's play-CDN
+        # script throughout, so this isn't as strict as a nonce-based CSP
+        # could be - but it still blocks loading scripts/styles/frames from
+        # anywhere unlisted, which is the bulk of what CSP defends against.
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "font-src 'self' https://fonts.gstatic.com; "
+            "img-src 'self' data:; "
+            "connect-src 'self'; "
+            "frame-ancestors 'none'; "
+            "base-uri 'self'; "
+            "form-action 'self'"
+        )
+        return response
+
     return app
