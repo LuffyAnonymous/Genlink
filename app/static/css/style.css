@@ -327,6 +327,95 @@ input:focus-visible,
   display: inline-block;
 }
 
+.gen-textarea-lg {
+  height: 240px;
+}
+
+/* ---------- Compact credit bar (Ticket Manager header) ---------- */
+.credit-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  min-height: 64px;
+  padding: 0.85rem 1.35rem;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+
+.credit-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+}
+
+.credit-bar-icon {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.credit-bar-value {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--ink);
+  display: inline-block;
+  min-width: 1ch;
+}
+
+/* ---------- Generator card (Ticket Manager) - a plain, roomy card
+   without the docket's side tab, for a cleaner "primary tool" feel ---------- */
+.generator-card {
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 2rem 2.25rem;
+}
+
+@media (max-width: 640px) {
+  .generator-card {
+    padding: 1.5rem;
+  }
+}
+
+.generator-card-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.35rem;
+  color: var(--ink);
+}
+
+/* ---------- Generate button - the page's strongest visual element ---------- */
+.btn-generate {
+  height: 52px;
+  font-size: 1rem;
+  border-radius: var(--radius-md);
+  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-generate:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px -10px var(--accent);
+}
+
+.btn-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: btnSpin 0.7s linear infinite;
+}
+
+@keyframes btnSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* ---------- Flash messages ---------- */
 .flash {
   border-radius: var(--radius-sm);

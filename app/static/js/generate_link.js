@@ -88,6 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (data.success) {
 
         let reuseNote;
+        let toastMessage;
         if (data.reused) {
           reuseNote = `
             <div class="flash flash-success">
@@ -95,12 +96,14 @@ document.addEventListener("DOMContentLoaded", () => {
               Balance: ${data.credits_remaining}
             </div>
           `;
+          toastMessage = "Link ready - existing link reused, no credit charged.";
         } else if (data.unlimited) {
           reuseNote = `
             <div class="flash flash-success">
               Success - unlimited access, no credit charged.
             </div>
           `;
+          toastMessage = "Link generated - unlimited access, no credit charged.";
         } else {
           reuseNote = `
             <div class="flash flash-success">
@@ -108,7 +111,10 @@ document.addEventListener("DOMContentLoaded", () => {
               Balance: ${data.credits_remaining}
             </div>
           `;
+          toastMessage = "Link generated successfully.";
         }
+
+        showToast(toastMessage, "success");
 
 
         /*
@@ -303,6 +309,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
       submitBtn.textContent =
         "Run this account (1 credit)";
+
+      // Resets the *visible* Generate button (this hidden form's own
+      // button never shows) - a no-op if this page doesn't have the
+      // generator card (setGeneratorLoadingState is only defined there).
+      if (typeof window.setGeneratorLoadingState === "function") {
+        window.setGeneratorLoadingState(false);
+      }
 
     }
 

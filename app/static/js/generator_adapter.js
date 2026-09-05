@@ -11,6 +11,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const entryCount = document.getElementById("entry-count");
   const generateBtn = document.getElementById("generate-submit");
+  const generateBtnLabel = generateBtn.querySelector(".btn-generate-label");
+  const generateBtnSpinner = generateBtn.querySelector(".btn-spinner");
 
   const proxyToggle = document.getElementById("proxy-toggle");
   const proxyPanel = document.getElementById("proxy-panel");
@@ -31,12 +33,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function updateCount() {
     const count = parseLines().length;
-    entryCount.textContent = `${count} ${count === 1 ? "entry" : "entries"}`;
+    entryCount.textContent = `${count} ${count === 1 ? "Account" : "Accounts"}`;
     generateBtn.disabled = count === 0;
   }
 
   textarea.addEventListener("input", updateCount);
   updateCount();
+
+  // Toggles the visible Generate button's loading state - called here right
+  // before handing off to whichever hidden form actually submits, and again
+  // by generate_link.js once the single-account AJAX request finishes (the
+  // bulk/CSV path navigates to a new page instead, so never needs to reset).
+  function setGeneratingState(isGenerating) {
+    if (isGenerating) {
+      generateBtn.disabled = true;
+      generateBtnSpinner.classList.remove("hidden");
+      generateBtnLabel.textContent = "Generating...";
+    } else {
+      generateBtnSpinner.classList.add("hidden");
+      generateBtnLabel.textContent = "Generate Ticket Links";
+      updateCount(); // restores the correct disabled state for current input
+    }
+  }
+  window.setGeneratorLoadingState = setGeneratingState;
 
   proxyToggle.addEventListener("click", () => {
     const willShow = proxyPanel.classList.contains("hidden");
@@ -79,6 +98,8 @@ document.addEventListener("DOMContentLoaded", () => {
       alert("Each line needs an account and password separated by a comma, e.g. 1245678,mypassword");
       return;
     }
+
+    setGeneratingState(true);
 
     if (rows.length === 1) {
       document.getElementById("account_email").value = rows[0].account;

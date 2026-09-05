@@ -8,267 +8,176 @@
   &larr; Back to matches
 </a>
 
-<div class="flex items-center gap-4 mb-8">
+<h1 class="display text-3xl mb-6">
+  {{ match.home_team }}
+  <span style="color:var(--muted)">v</span>
+  {{ match.away_team }}
+</h1>
 
-  {% if club.slug == "man-utd" %}
-    <!-- Manchester United Logo -->
-    <div
-      class="flex items-center justify-center flex-shrink-0"
-      style="width:64px; height:64px;"
-    >
-      <img
-        src="{{ url_for('static', filename='images/manutd.png') }}"
-        alt="Manchester United"
+<!-- Compact credit bar - always visible, deliberately lower-key than the generator below -->
+<div class="credit-bar mb-8">
+  <div class="credit-bar-left">
+    <span class="credit-bar-icon">&#129689;</span>
+    {% if current_user.has_unlimited %}
+      <span>Unlimited access <span style="color:var(--ink-faint)">until {{ current_user.unlimited_until.strftime('%d %b %Y') }}</span></span>
+    {% else %}
+      <span>
+        Available Credits:
+        <span class="credit-bar-value" data-counter data-value="{{ current_user.credits }}">0</span>
+        Remaining
+      </span>
+    {% endif %}
+  </div>
+  <a href="{{ url_for('billing.buy_credits_page') }}" class="btn btn-ghost">
+    {% if current_user.has_unlimited %}Buy credits{% else %}Buy more credits{% endif %}
+  </a>
+</div>
+
+{% if club.slug == "man-utd" %}
+
+<!-- Ticket generator -->
+<div class="generator-card fade-up">
+
+  <p class="generator-card-title mb-6">Ticket Generator</p>
+
+  <div class="field mb-2">
+
+    <div class="flex items-center justify-between" style="margin-bottom:0.4rem">
+      <label for="credentials-input" style="margin-bottom:0">Credentials</label>
+      <span class="mono text-xs" id="entry-count" style="color:var(--ink-faint)">0 Accounts</span>
+    </div>
+
+    <textarea
+      id="credentials-input"
+      class="gen-textarea gen-textarea-lg"
+      placeholder="email OR Supporter ID,password"
+    ></textarea>
+
+    <p class="text-xs mt-2" style="color:var(--muted)">
+      One account per line. Log in with either the Supporter ID or email - e.g.
+      <span class="mono">1245678,mypassword</span> or <span class="mono">jane@example.com,mypassword</span>. Both work.
+    </p>
+
+  </div>
+
+  <div class="mt-4">
+
+    <button type="button" id="proxy-toggle" class="gen-disclosure">
+      <span class="gen-disclosure-arrow">&#9656;</span>
+      Proxy <span style="font-weight:400; text-transform:none; letter-spacing:normal; color:var(--ink-faint)">(optional)</span>
+    </button>
+
+    <div id="proxy-panel" class="hidden mt-2">
+      <input type="text" id="credentials-proxy" placeholder="user:pass@host:port or host:port">
+    </div>
+
+  </div>
+
+  <button type="button" id="generate-submit" class="btn btn-primary btn-block btn-generate mt-6" disabled>
+    <span class="btn-generate-label">Generate Ticket Links</span>
+    <span class="btn-spinner hidden"></span>
+  </button>
+
+  <div id="generate-link-result" class="hidden mt-5"></div>
+
+  <p class="text-xs mt-5" style="color:var(--muted)">
+    Your password is sent straight to the link generator and is never stored on our servers.
+    Prefer a file? <a href="{{ url_for('main.csv_template', slug=club.slug, match_id=match.id) }}" style="color:var(--accent-2)">download the CSV template</a>,
+    then <button type="button" id="show-csv-upload" style="color:var(--accent-2); background:none; border:none; padding:0; cursor:pointer; text-decoration:underline; font:inherit;">upload it here</button>.
+  </p>
+
+  <div id="csv-upload-panel" class="hidden mt-4 pt-4" style="border-top:1px solid var(--line)">
+    <div class="field">
+      <label for="csv_file_visible">CSV file</label>
+      <input
+        type="file"
+        id="csv_file_visible"
+        accept=".csv"
         style="
-          width:64px;
-          height:64px;
-          object-fit:contain;
+          background:var(--paper-raised);
+          border:1px solid var(--line);
+          color:var(--text);
+          padding:0.65rem 0.9rem;
+          border-radius:var(--radius-sm);
+          font-size:0.9rem;
+          width:100%;
         "
       >
     </div>
-  {% else %}
-    <!-- Default club icon -->
-    <div
-      class="rounded-full flex items-center justify-center flex-shrink-0"
-      style="
-        width:56px;
-        height:56px;
-        background:{{ club.color }};
-        color:#fff;
-        font-family:var(--font-display);
-        font-weight:700;
-        font-size:1.3rem;
-        border:2px solid var(--border);
-      "
-    >
-      {{ club.name[0] }}
-    </div>
-  {% endif %}
-
-  <div>
-    <p class="eyebrow mb-1">Ticket Manager</p>
-
-    <h1 class="display text-3xl">
-      {{ match.home_team }}
-      <span style="color:var(--muted)">v</span>
-      {{ match.away_team }}
-    </h1>
+    <button type="button" id="csv-upload-visible-submit" class="btn btn-ghost btn-block">
+      Upload &amp; run (1 credit per account)
+    </button>
   </div>
 
 </div>
 
+{% else %}
 
-<div class="grid md:grid-cols-3 gap-6 items-start">
+<!-- Manual link capture (Chelsea, Spurs - no automated login API yet) -->
+<div class="generator-card fade-up">
 
-  <div class="md:col-span-2 space-y-6">
+  <p class="generator-card-title mb-3">Record a ticket link</p>
+  <p class="text-sm mb-6" style="color:var(--muted)">
+    {{ club.name }} isn't wired to automatic login yet. Run the local browser tool
+    (<span class="mono">linkgen_service/multi_club_linkgen.py {{ club.slug }}</span>) to log in
+    yourself and find the link, then paste it below - it's saved exactly like any other
+    generated ticket and still spends 1 credit.
+  </p>
 
-    {% if club.slug == "man-utd" %}
+  <form method="POST" action="{{ url_for('main.match_manual_submit', slug=club.slug, match_id=match.id) }}" class="space-y-4">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-    <!-- Ticket generator -->
-    <div class="docket fade-up">
-
-      <div class="docket-body">
-
-        <p class="eyebrow mb-1">Ticket generator</p>
-        <p class="text-sm mb-5" style="color:var(--muted)">
-          Paste one account per line, then generate. One credit is spent per account that succeeds - failed attempts cost nothing.
-        </p>
-
-        <div class="field">
-
-          <div class="flex items-center justify-between" style="margin-bottom:0.4rem">
-            <label for="credentials-input" style="margin-bottom:0">Credentials</label>
-            <span class="mono text-xs" id="entry-count" style="color:var(--ink-faint)">0 entries</span>
-          </div>
-
-          <textarea
-            id="credentials-input"
-            class="gen-textarea"
-            rows="5"
-            placeholder="email OR Supporter ID,password"
-          ></textarea>
-
-          <p class="text-xs mt-2" style="color:var(--muted)">
-            One account per line. Log in with either the Supporter ID or email - e.g.
-            <span class="mono">1245678,mypassword</span> or <span class="mono">jane@example.com,mypassword</span>. Both work.
-          </p>
-
-        </div>
-
-        <div class="mt-4">
-
-          <button type="button" id="proxy-toggle" class="gen-disclosure">
-            <span class="gen-disclosure-arrow">&#9656;</span>
-            Proxy <span style="font-weight:400; text-transform:none; letter-spacing:normal; color:var(--ink-faint)">(optional)</span>
-          </button>
-
-          <div id="proxy-panel" class="hidden mt-2">
-            <input type="text" id="credentials-proxy" placeholder="user:pass@host:port or host:port">
-          </div>
-
-        </div>
-
-        <button type="button" id="generate-submit" class="btn btn-primary btn-block mt-5" disabled>
-          Generate
-        </button>
-
-        <div id="generate-link-result" class="hidden mt-4"></div>
-
-        <p class="text-xs mt-4" style="color:var(--muted)">
-          Your password is sent straight to the link generator and is never stored on our servers.
-          Prefer a file? <a href="{{ url_for('main.csv_template', slug=club.slug, match_id=match.id) }}" style="color:var(--accent-2)">download the CSV template</a>,
-          then <button type="button" id="show-csv-upload" style="color:var(--accent-2); background:none; border:none; padding:0; cursor:pointer; text-decoration:underline; font:inherit;">upload it here</button>.
-        </p>
-
-        <div id="csv-upload-panel" class="hidden mt-4 pt-4" style="border-top:1px solid var(--line)">
-          <div class="field">
-            <label for="csv_file_visible">CSV file</label>
-            <input
-              type="file"
-              id="csv_file_visible"
-              accept=".csv"
-              style="
-                background:var(--paper-raised);
-                border:1px solid var(--line);
-                color:var(--text);
-                padding:0.65rem 0.9rem;
-                border-radius:var(--radius-sm);
-                font-size:0.9rem;
-                width:100%;
-              "
-            >
-          </div>
-          <button type="button" id="csv-upload-visible-submit" class="btn btn-ghost btn-block">
-            Upload &amp; run (1 credit per account)
-          </button>
-        </div>
-
-      </div>
-
+    <div class="field">
+      <label for="manual_account_email">Supporter ID / email</label>
+      <input type="text" id="manual_account_email" name="account_email" placeholder="1245678 or jane@example.com" required autocomplete="off">
     </div>
 
-    {% else %}
-
-    <!-- Manual link capture (Chelsea, Spurs - no automated login API yet) -->
-    <div class="docket fade-up">
-
-      <div class="docket-body">
-
-        <p class="eyebrow mb-1">Record a ticket link</p>
-        <p class="text-sm mb-5" style="color:var(--muted)">
-          {{ club.name }} isn't wired to automatic login yet. Run the local browser tool
-          (<span class="mono">linkgen_service/multi_club_linkgen.py {{ club.slug }}</span>) to log in
-          yourself and find the link, then paste it below - it's saved exactly like any other
-          generated ticket and still spends 1 credit.
-        </p>
-
-        <form method="POST" action="{{ url_for('main.match_manual_submit', slug=club.slug, match_id=match.id) }}" class="space-y-4">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-          <div class="field">
-            <label for="manual_account_email">Supporter ID / email</label>
-            <input type="text" id="manual_account_email" name="account_email" placeholder="1245678 or jane@example.com" required autocomplete="off">
-          </div>
-
-          <div class="field">
-            <label for="ticket_link">Ticket link</label>
-            <input type="url" id="ticket_link" name="ticket_link" placeholder="https://..." required autocomplete="off">
-          </div>
-
-          <button type="submit" class="btn btn-primary btn-block">
-            Save this link (1 credit)
-          </button>
-        </form>
-
-      </div>
-
+    <div class="field">
+      <label for="ticket_link">Ticket link</label>
+      <input type="url" id="ticket_link" name="ticket_link" placeholder="https://..." required autocomplete="off">
     </div>
 
-    {% endif %}
-
-
-    <!--
-      Original single-account and CSV-bulk forms, kept exactly as before
-      but hidden - the generator card above drives them programmatically
-      so generate_link.js and the bulk-upload route need no changes.
-    -->
-    <form
-      id="generate-link-form"
-      data-match-name="{{ match.name }}"
-      data-match-id="{{ match.id }}"
-      data-club="{{ club.slug }}"
-      class="hidden"
-      aria-hidden="true"
-    >
-      <input type="text" id="account_email" name="Supporter ID" autocomplete="off">
-      <input type="password" id="account_password" name="account_password" autocomplete="off">
-      <input type="text" id="account_proxy" name="account_proxy">
-      <button type="submit" id="generate-link-submit">Run this account (1 credit)</button>
-    </form>
-
-    <form
-      id="bulk-upload-form"
-      method="POST"
-      action="{{ url_for('main.match_bulk_submit', slug=club.slug, match_id=match.id) }}"
-      enctype="multipart/form-data"
-      class="hidden"
-      aria-hidden="true"
-    >
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <input type="file" id="csv_file" name="csv_file" accept=".csv">
-      <button type="submit" id="bulk-upload-submit">Upload &amp; run (1 credit per account)</button>
-    </form>
-
-  </div>
-
-
-  <!-- Balance -->
-  <div class="ticket-row">
-
-    {% if current_user.has_unlimited %}
-
-      <p class="eyebrow mb-3">Your balance</p>
-
-      <p class="display text-2xl mb-1">Unlimited</p>
-      <p class="text-xs" style="color:var(--muted)">
-        Until {{ current_user.unlimited_until.strftime('%d %b %Y') }} - no credits spent
-      </p>
-
-    {% else %}
-
-      <p class="eyebrow mb-3">
-        Your balance
-      </p>
-
-      <div class="flex items-end gap-2">
-
-        <span
-          class="credit-counter"
-          style="font-size:2.2rem"
-          data-counter
-          data-value="{{ current_user.credits }}"
-        >
-          0
-        </span>
-
-        <span class="unit">
-          credits
-        </span>
-
-      </div>
-
-    {% endif %}
-
-    <a
-      href="{{ url_for('billing.buy_credits_page') }}"
-      class="btn btn-ghost btn-block mt-4"
-    >
-      {% if current_user.has_unlimited %}Buy credits{% else %}Buy more credits{% endif %}
-    </a>
-
-  </div>
+    <button type="submit" class="btn btn-primary btn-block btn-generate">
+      Save this link (1 credit)
+    </button>
+  </form>
 
 </div>
+
+{% endif %}
+
+
+<!--
+  Original single-account and CSV-bulk forms, kept exactly as before
+  but hidden - the generator card above drives them programmatically
+  so generate_link.js and the bulk-upload route need no changes.
+-->
+<form
+  id="generate-link-form"
+  data-match-name="{{ match.name }}"
+  data-match-id="{{ match.id }}"
+  data-club="{{ club.slug }}"
+  class="hidden"
+  aria-hidden="true"
+>
+  <input type="text" id="account_email" name="Supporter ID" autocomplete="off">
+  <input type="password" id="account_password" name="account_password" autocomplete="off">
+  <input type="text" id="account_proxy" name="account_proxy">
+  <button type="submit" id="generate-link-submit">Run this account (1 credit)</button>
+</form>
+
+<form
+  id="bulk-upload-form"
+  method="POST"
+  action="{{ url_for('main.match_bulk_submit', slug=club.slug, match_id=match.id) }}"
+  enctype="multipart/form-data"
+  class="hidden"
+  aria-hidden="true"
+>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="file" id="csv_file" name="csv_file" accept=".csv">
+  <button type="submit" id="bulk-upload-submit">Upload &amp; run (1 credit per account)</button>
+</form>
 
 {% endblock %}
 
