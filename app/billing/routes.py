@@ -316,7 +316,11 @@ def paypal_return(reference):
         current_app.logger.error("PayPal capture failed: %s", exc)
         return render_template("billing/stripe_processing.html", transfer=payment)
 
-    if status_code == 200 and body.get("status") == "COMPLETED":
+    # PayPal returns 201 (not 200) for a freshly-successful capture - found
+    # by an actual live sandbox test, where this exact check silently
+    # failed to recognize a real, successful capture and left the payment
+    # stuck pending despite PayPal having genuinely taken the money.
+    if status_code in (200, 201) and body.get("status") == "COMPLETED":
         payment.paypal_capture_id = paypal_api.get_capture_id(body)
         _fulfill_payment(payment)
         return render_template("billing/transfer_confirmed.html", transfer=payment, already=False)

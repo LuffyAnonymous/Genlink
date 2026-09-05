@@ -88,7 +88,14 @@ def create_app(config_class=Config):
             "connect-src 'self'; "
             "frame-ancestors 'none'; "
             "base-uri 'self'; "
-            "form-action 'self'"
+            # form-action covers the whole redirect chain a form submission
+            # can end on, not just the form's own target - our buy-credits
+            # form posts to our own /credits/... route (self), but THAT
+            # route responds with a redirect straight to the payment
+            # provider's own checkout page, so both providers' domains
+            # need to be allowed here too or the browser silently blocks
+            # ever reaching them (caught by an actual live checkout test).
+            "form-action 'self' https://checkout.stripe.com https://www.paypal.com https://www.sandbox.paypal.com"
         )
         return response
 
