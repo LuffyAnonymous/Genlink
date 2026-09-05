@@ -78,10 +78,11 @@ class CreditTransaction(db.Model):
 
 
 class PaymentRequest(db.Model):
-    """A customer's checkout attempt, paid via Stripe. Credits (or unlimited
-    access) are only ever added by the Stripe webhook once payment actually
-    succeeds - never by the browser redirect back to our site, since that
-    can be skipped, replayed, or spoofed."""
+    """A customer's checkout attempt, paid via Stripe or PayPal. Credits (or
+    unlimited access) are only ever added once the provider has confirmed
+    the payment actually succeeded (Stripe's webhook; PayPal's order
+    capture/webhook) - never by the browser redirect back to our site alone,
+    since that can be skipped, replayed, or spoofed."""
 
     __tablename__ = "payment_requests"
 
@@ -96,8 +97,11 @@ class PaymentRequest(db.Model):
     reference = db.Column(db.String(32), unique=True, nullable=False, index=True)
     token = db.Column(db.String(64), unique=True, nullable=False, index=True)
     status = db.Column(db.String(20), default="pending", nullable=False)  # pending | confirmed
+    provider = db.Column(db.String(20), default="stripe", nullable=False)  # stripe | paypal
     stripe_checkout_session_id = db.Column(db.String(255), unique=True, nullable=True, index=True)
     stripe_payment_intent_id = db.Column(db.String(255), nullable=True)
+    paypal_order_id = db.Column(db.String(64), unique=True, nullable=True, index=True)
+    paypal_capture_id = db.Column(db.String(64), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     confirmed_at = db.Column(db.DateTime, nullable=True)
 

@@ -40,6 +40,17 @@ class Config:
     ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@genlinklab.co.uk")
     REGISTRATION_TOKEN_EXPIRY_DAYS = int(os.environ.get("REGISTRATION_TOKEN_EXPIRY_DAYS", 7))
 
+    # --- Payments ---
+    # PAYMENTS_ENABLED is the single kill switch for the whole buy-credits
+    # flow - when off, the buy-credits page shows a "temporarily
+    # unavailable" notice instead of a checkout button, and both provider
+    # routes below refuse to start a new payment even if hit directly.
+    # PAYMENT_PROVIDER picks which one actually runs when enabled - flip
+    # this (and PAYMENTS_ENABLED) once the new provider is ready, no code
+    # changes needed.
+    PAYMENTS_ENABLED = _env_bool("PAYMENTS_ENABLED", True)
+    PAYMENT_PROVIDER = os.environ.get("PAYMENT_PROVIDER", "stripe")  # "stripe" | "paypal"
+
     # --- Stripe (credit/unlimited-pass checkout) ---
     # Test-mode keys (sk_test_.../whsec_...) for local dev; swap for live
     # keys (sk_live_...) only in production. Never hard-code these -
@@ -48,6 +59,16 @@ class Config:
     STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY")
     STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY")
     STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET")
+
+    # --- PayPal (credit/unlimited-pass checkout) ---
+    # PAYPAL_MODE "sandbox" hits api-m.sandbox.paypal.com for testing;
+    # "live" hits api-m.paypal.com for real payments. PAYPAL_WEBHOOK_ID
+    # comes from the webhook's details page in the PayPal Developer
+    # Dashboard once a real webhook endpoint is registered there.
+    PAYPAL_MODE = os.environ.get("PAYPAL_MODE", "sandbox")
+    PAYPAL_CLIENT_ID = os.environ.get("PAYPAL_CLIENT_ID")
+    PAYPAL_CLIENT_SECRET = os.environ.get("PAYPAL_CLIENT_SECRET")
+    PAYPAL_WEBHOOK_ID = os.environ.get("PAYPAL_WEBHOOK_ID")
 
     # --- Link generation API (your existing ticket-link generator) ---
     # LINKGEN_API_URL/KEY below are the default (currently Man Utd's).

@@ -254,6 +254,36 @@ def migrate_stripe_billing():
         print("Migration complete.")
 
 
+@app.cli.command("migrate-paypal")
+def migrate_paypal():
+    """One-time migration adding PayPal columns to payment_requests
+    (provider, paypal_order_id, paypal_capture_id). Existing rows are
+    backfilled with provider='stripe'. Safe to re-run.
+    Run with: flask --app wsgi.py migrate-paypal"""
+    from sqlalchemy import inspect, text
+
+    with app.app_context():
+        cols = {c["name"] for c in inspect(db.engine).get_columns("payment_requests")}
+        with db.engine.begin() as conn:
+            if "provider" not in cols:
+                conn.execute(text("ALTER TABLE payment_requests ADD COLUMN provider VARCHAR(20) NOT NULL DEFAULT 'stripe'"))
+                print("Added payment_requests.provider (backfilled 'stripe').")
+            else:
+                print("payment_requests.provider already exists - skipping.")
+            if "paypal_order_id" not in cols:
+                conn.execute(text("ALTER TABLE payment_requests ADD COLUMN paypal_order_id VARCHAR(64)"))
+                conn.execute(text("CREATE UNIQUE INDEX ix_payment_requests_paypal_order_id ON payment_requests (paypal_order_id)"))
+                print("Added payment_requests.paypal_order_id.")
+            else:
+                print("payment_requests.paypal_order_id already exists - skipping.")
+            if "paypal_capture_id" not in cols:
+                conn.execute(text("ALTER TABLE payment_requests ADD COLUMN paypal_capture_id VARCHAR(64)"))
+                print("Added payment_requests.paypal_capture_id.")
+            else:
+                print("payment_requests.paypal_capture_id already exists - skipping.")
+        print("Migration complete.")
+
+
 @app.cli.command("migrate-admin")
 def migrate_admin():
     """One-time migration adding users.is_admin for the admin dashboard.

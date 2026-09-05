@@ -13,7 +13,16 @@
     {% endif %}
   </p>
 
-  <form method="POST" action="{{ url_for('billing.create_checkout_session') }}" id="buy-form">
+  {% if not payments_enabled %}
+    <div class="ticket-row is-fail fade-up">
+      <p class="text-sm font-medium">Payments are temporarily unavailable</p>
+      <p class="text-xs mt-1" style="color:var(--muted)">
+        We're switching payment providers - check back soon, or contact
+        <a href="mailto:{{ admin_email }}" style="color:var(--accent-2)">{{ admin_email }}</a> in the meantime.
+      </p>
+    </div>
+  {% else %}
+  <form method="POST" action="{{ url_for('billing.create_paypal_order') if payment_provider == 'paypal' else url_for('billing.create_checkout_session') }}" id="buy-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="product" id="product-field" value="credits">
 
@@ -52,10 +61,11 @@
 
     <button type="submit" class="btn btn-primary btn-block">Continue to payment</button>
     <p class="text-xs text-center mt-3" style="color:var(--muted)">
-      You'll pay securely with Stripe. Credits (or unlimited access) are added automatically the
+      You'll pay securely with {{ 'PayPal' if payment_provider == 'paypal' else 'Stripe' }}. Credits (or unlimited access) are added automatically the
       moment payment succeeds.
     </p>
   </form>
+  {% endif %}
 </div>
 
 {% endblock %}

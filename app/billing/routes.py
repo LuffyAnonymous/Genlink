@@ -1,6 +1,7 @@
 import secrets
 from datetime import datetime, timedelta
 
+import requests
 import stripe
 from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
 
@@ -8,6 +9,7 @@ from flask_login import login_required, current_user
 
 from app.extensions import db, csrf
 from app.models import User, CreditTransaction, PaymentRequest
+from app.utils import paypal as paypal_api
 from app.utils.email import send_user_credits_added_email
 
 billing_bp = Blueprint("billing", __name__)
@@ -18,6 +20,57 @@ UNLIMITED_MONTH_PRICE = 1500  # GBP, flat price
 UNLIMITED_MONTH_DAYS = 30
 
 
+def _fulfill_payment(payment):
+    """Grants credits/unlimited access for a payment_request row. Caller
+    must have already locked the row (with_for_update) and set any
+    provider-specific id fields on it before calling this - this only
+    commits once, covering both. Idempotent: a second call on an
+    already-confirmed row is a no-op, so duplicate webhook deliveries or
+    a webhook racing the browser return can't double-credit an account."""
+    if payment.status == "confirmed":
+        return False
+
+    user = db.session.query(User).with_for_update().get(payment.user_id)
+    provider_name = {"stripe": "Stripe", "paypal": "PayPal"}.get(payment.provider, payment.provider.capitalize())
+
+    if payment.kind == "unlimited_month":
+        base = user.unlimited_until if user.has_unlimited else datetime.utcnow()
+        user.unlimited_until = base + timedelta(days=UNLIMITED_MONTH_DAYS)
+        description = (
+            f"Unlimited access for {UNLIMITED_MONTH_DAYS} days via "
+            f"{provider_name} (£{payment.credits}, {payment.reference})"
+        )
+        amount = 0
+        tx_type = "unlimited"
+    else:
+        user.credits += payment.credits
+        description = f"Purchased {payment.credits} credit(s) via {provider_name} ({payment.reference})"
+        amount = payment.credits
+        tx_type = "purchase"
+
+    payment.status = "confirmed"
+    payment.confirmed_at = datetime.utcnow()
+
+    db.session.add(user)
+    db.session.add(
+        CreditTransaction(
+            user_id=user.id,
+            type=tx_type,
+            amount=amount,
+            description=description,
+            payment_reference=payment.reference,
+        )
+    )
+    db.session.commit()
+
+    try:
+        send_user_credits_added_email(user, payment)
+    except Exception as exc:  # noqa: BLE001
+        current_app.logger.error("Failed to send credits-added email: %s", exc)
+
+    return True
+
+
 @billing_bp.route("/buy", methods=["GET"])
 @login_required
 def buy_credits_page():
@@ -25,35 +78,48 @@ def buy_credits_page():
         "billing/buy_credits.html",
         presets=PRESET_PACKAGES,
         unlimited_price=UNLIMITED_MONTH_PRICE,
+        payments_enabled=current_app.config.get("PAYMENTS_ENABLED"),
+        payment_provider=current_app.config.get("PAYMENT_PROVIDER"),
     )
+
+
+def _read_product_selection(form):
+    """Shared by both providers' checkout-start routes - returns
+    (kind, credits, product_name) or (None, None, None) if invalid, in
+    which case a flash message has already been set."""
+    product = form.get("product", "credits")
+
+    if product == "unlimited_month":
+        return "unlimited_month", UNLIMITED_MONTH_PRICE, f"Genlinklab unlimited access ({UNLIMITED_MONTH_DAYS} days)"
+
+    try:
+        credits = int(form.get("credits", 0))
+    except (TypeError, ValueError):
+        credits = 0
+
+    if credits < 1 or credits > 10000:
+        flash("Enter a valid number of credits (1-10,000).", "error")
+        return None, None, None
+
+    return "credits", credits, f"{credits} Genlinklab credit(s)"
 
 
 @billing_bp.route("/checkout", methods=["POST"])
 @login_required
 def create_checkout_session():
-    product = request.form.get("product", "credits")
+    if not current_app.config.get("PAYMENTS_ENABLED") or current_app.config.get("PAYMENT_PROVIDER") != "stripe":
+        flash("Card payments are temporarily unavailable - please check back soon.", "error")
+        return redirect(url_for("billing.buy_credits_page"))
 
-    if product == "unlimited_month":
-        kind = "unlimited_month"
-        credits = UNLIMITED_MONTH_PRICE
-        product_name = f"Genlinklab unlimited access ({UNLIMITED_MONTH_DAYS} days)"
-    else:
-        kind = "credits"
-        try:
-            credits = int(request.form.get("credits", 0))
-        except (TypeError, ValueError):
-            credits = 0
-
-        if credits < 1 or credits > 10000:
-            flash("Enter a valid number of credits (1-10,000).", "error")
-            return redirect(url_for("billing.buy_credits_page"))
-
-        product_name = f"{credits} Genlinklab credit(s)"
+    kind, credits, product_name = _read_product_selection(request.form)
+    if kind is None:
+        return redirect(url_for("billing.buy_credits_page"))
 
     payment = PaymentRequest(
         user_id=current_user.id,
         credits=credits,
         kind=kind,
+        provider="stripe",
         reference=f"TS-{secrets.token_hex(4).upper()}",
         token=secrets.token_urlsafe(32),
     )
@@ -161,44 +227,135 @@ def stripe_webhook():
         current_app.logger.error("Webhook referenced unknown PaymentRequest %s", reference)
         return "", 200
 
-    if payment.status == "confirmed":
-        return "", 200  # already handled - this is a duplicate delivery
-
-    user = db.session.query(User).with_for_update().get(payment.user_id)
-
-    if payment.kind == "unlimited_month":
-        base = user.unlimited_until if user.has_unlimited else datetime.utcnow()
-        user.unlimited_until = base + timedelta(days=UNLIMITED_MONTH_DAYS)
-        transaction_description = (
-            f"Unlimited access for {UNLIMITED_MONTH_DAYS} days via Stripe (£{payment.credits}, {payment.reference})"
-        )
-        transaction_amount = 0
-        transaction_type = "unlimited"
-    else:
-        user.credits += payment.credits
-        transaction_description = f"Purchased {payment.credits} credit(s) via Stripe ({payment.reference})"
-        transaction_amount = payment.credits
-        transaction_type = "purchase"
-
-    payment.status = "confirmed"
-    payment.confirmed_at = datetime.utcnow()
     payment.stripe_payment_intent_id = session.get("payment_intent")
+    _fulfill_payment(payment)
 
-    db.session.add(user)
-    db.session.add(
-        CreditTransaction(
-            user_id=user.id,
-            type=transaction_type,
-            amount=transaction_amount,
-            description=transaction_description,
-            payment_reference=payment.reference,
-        )
+    return "", 200
+
+
+@billing_bp.route("/paypal/checkout", methods=["POST"])
+@login_required
+def create_paypal_order():
+    if not current_app.config.get("PAYMENTS_ENABLED") or current_app.config.get("PAYMENT_PROVIDER") != "paypal":
+        flash("Payments are temporarily unavailable - please check back soon.", "error")
+        return redirect(url_for("billing.buy_credits_page"))
+
+    kind, credits, product_name = _read_product_selection(request.form)
+    if kind is None:
+        return redirect(url_for("billing.buy_credits_page"))
+
+    payment = PaymentRequest(
+        user_id=current_user.id,
+        credits=credits,
+        kind=kind,
+        provider="paypal",
+        reference=f"TS-{secrets.token_hex(4).upper()}",
+        token=secrets.token_urlsafe(32),
     )
+    db.session.add(payment)
     db.session.commit()
 
     try:
-        send_user_credits_added_email(user, payment)
-    except Exception as exc:  # noqa: BLE001
-        current_app.logger.error("Failed to send credits-added email: %s", exc)
+        order = paypal_api.create_order(
+            reference=payment.reference,
+            amount_gbp=credits,
+            description=product_name,
+            return_url=url_for("billing.paypal_return", reference=payment.reference, _external=True),
+            cancel_url=url_for("billing.buy_credits_page", _external=True),
+            config=current_app.config,
+        )
+    except requests.RequestException as exc:
+        current_app.logger.error("PayPal order creation failed: %s", exc)
+        flash("Couldn't start checkout - please try again shortly.", "error")
+        return redirect(url_for("billing.buy_credits_page"))
 
+    approve_url = paypal_api.get_approve_url(order)
+    if not approve_url:
+        current_app.logger.error("PayPal order had no approve link: %s", order)
+        flash("Couldn't start checkout - please try again shortly.", "error")
+        return redirect(url_for("billing.buy_credits_page"))
+
+    payment.paypal_order_id = order.get("id")
+    db.session.commit()
+
+    return redirect(approve_url, code=303)
+
+
+@billing_bp.route("/paypal/return/<reference>")
+@login_required
+def paypal_return(reference):
+    """Unlike Stripe's return route, this one does capture the payment
+    itself - PayPal's /capture call is a direct authenticated server-to-
+    server request to PayPal, so its response is authoritative (not
+    something the customer's browser could spoof), unlike Stripe
+    Checkout's redirect which carries no such confirmation. The webhook
+    below still exists as a fallback for the customer never coming back
+    (e.g. they approve on PayPal's app and close the tab)."""
+    payment = PaymentRequest.query.filter_by(
+        reference=reference, user_id=current_user.id
+    ).first_or_404()
+
+    if payment.status == "confirmed":
+        return render_template("billing/transfer_confirmed.html", transfer=payment, already=False)
+
+    order_id = request.args.get("token") or payment.paypal_order_id
+    if not order_id:
+        return render_template("billing/stripe_processing.html", transfer=payment)
+
+    payment = PaymentRequest.query.with_for_update().filter_by(
+        reference=reference, user_id=current_user.id
+    ).first()
+    if payment.status == "confirmed":
+        return render_template("billing/transfer_confirmed.html", transfer=payment, already=False)
+
+    try:
+        status_code, body = paypal_api.capture_order(order_id, current_app.config)
+    except requests.RequestException as exc:
+        current_app.logger.error("PayPal capture failed: %s", exc)
+        return render_template("billing/stripe_processing.html", transfer=payment)
+
+    if status_code == 200 and body.get("status") == "COMPLETED":
+        payment.paypal_capture_id = paypal_api.get_capture_id(body)
+        _fulfill_payment(payment)
+        return render_template("billing/transfer_confirmed.html", transfer=payment, already=False)
+
+    # Not completed yet, or the customer backed out - the webhook will
+    # still fulfill it if PayPal confirms the payment later.
+    current_app.logger.info("PayPal capture for %s returned %s: %s", reference, status_code, body)
+    return render_template("billing/stripe_processing.html", transfer=payment)
+
+
+@billing_bp.route("/webhook/paypal", methods=["POST"])
+@csrf.exempt  # PayPal calls this server-to-server - there's no browser session/CSRF cookie to check
+def paypal_webhook():
+    body_dict = request.get_json(silent=True) or {}
+
+    try:
+        verified = paypal_api.verify_webhook_signature(request.headers, body_dict, current_app.config)
+    except requests.RequestException as exc:
+        current_app.logger.error("PayPal webhook signature check failed: %s", exc)
+        return "", 400
+
+    if not verified:
+        current_app.logger.warning("Rejected PayPal webhook: signature verification failed")
+        return "", 400
+
+    event_type = body_dict.get("event_type")
+    if event_type not in ("CHECKOUT.ORDER.APPROVED", "PAYMENT.CAPTURE.COMPLETED"):
+        return "", 200  # not an event we care about - acknowledge and ignore
+
+    order_id = paypal_api.order_id_from_webhook_event(body_dict)
+    if not order_id:
+        current_app.logger.error("PayPal webhook had no order id we recognize - event %s", body_dict.get("id"))
+        return "", 200
+
+    payment = PaymentRequest.query.with_for_update().filter_by(paypal_order_id=order_id).first()
+    if not payment:
+        current_app.logger.error("PayPal webhook referenced unknown order %s", order_id)
+        return "", 200
+
+    if event_type == "PAYMENT.CAPTURE.COMPLETED":
+        payment.paypal_capture_id = (body_dict.get("resource") or {}).get("id")
+
+    _fulfill_payment(payment)
     return "", 200
