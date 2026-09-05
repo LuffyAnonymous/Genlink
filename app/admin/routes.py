@@ -5,7 +5,7 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash,
 from flask_login import login_required, current_user
 
 from app.clubs import CLUBS, get_club
-from app.extensions import db
+from app.extensions import db, limiter
 from app.models import User, RegistrationToken, CreditTransaction, Match
 from app.utils.email import send_user_welcome_email
 
@@ -44,6 +44,7 @@ def dashboard():
 
 
 @admin_bp.route("/users/<int:user_id>/approve", methods=["POST"])
+@limiter.limit("100 per minute", key_func=lambda: str(current_user.get_id()))
 @admin_required
 def approve_user(user_id):
     user = db.session.query(User).with_for_update().get(user_id)
@@ -71,6 +72,7 @@ def approve_user(user_id):
 
 
 @admin_bp.route("/users/<int:user_id>/decline", methods=["POST"])
+@limiter.limit("100 per minute", key_func=lambda: str(current_user.get_id()))
 @admin_required
 def decline_user(user_id):
     user = db.session.query(User).with_for_update().get(user_id)
@@ -90,6 +92,7 @@ def decline_user(user_id):
 
 
 @admin_bp.route("/users/<int:user_id>/credits", methods=["POST"])
+@limiter.limit("100 per minute", key_func=lambda: str(current_user.get_id()))
 @admin_required
 def adjust_credits(user_id):
     user = db.session.query(User).with_for_update().get(user_id)
@@ -125,6 +128,7 @@ def adjust_credits(user_id):
 
 
 @admin_bp.route("/users/<int:user_id>/unlimited", methods=["POST"])
+@limiter.limit("100 per minute", key_func=lambda: str(current_user.get_id()))
 @admin_required
 def grant_unlimited(user_id):
     user = db.session.query(User).with_for_update().get(user_id)
@@ -161,6 +165,7 @@ def grant_unlimited(user_id):
 
 
 @admin_bp.route("/users/<int:user_id>/delete", methods=["POST"])
+@limiter.limit("100 per minute", key_func=lambda: str(current_user.get_id()))
 @admin_required
 def delete_user(user_id):
     user = db.session.query(User).with_for_update().get(user_id)
@@ -180,6 +185,7 @@ def delete_user(user_id):
 
 
 @admin_bp.route("/matches", methods=["POST"])
+@limiter.limit("100 per minute", key_func=lambda: str(current_user.get_id()))
 @admin_required
 def add_match():
     club_slug = (request.form.get("club_slug") or "").strip()
@@ -219,6 +225,7 @@ def add_match():
 
 
 @admin_bp.route("/matches/<int:match_id>/toggle", methods=["POST"])
+@limiter.limit("100 per minute", key_func=lambda: str(current_user.get_id()))
 @admin_required
 def toggle_match(match_id):
     match = db.session.query(Match).with_for_update().get(match_id)

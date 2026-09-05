@@ -2,7 +2,7 @@ import io
 from datetime import datetime, timedelta
 from sqlalchemy import or_
 from app.clubs import CLUBS, get_club
-from app.extensions import db
+from app.extensions import db, limiter
 from app.services.link_jobs import run_link_job
 from app.services.manual_link import record_manual_link
 from flask_login import login_required, current_user
@@ -173,6 +173,7 @@ def csv_template(slug, match_id):
 
 
 @main_bp.route("/tickets/<slug>/<int:match_id>/bulk", methods=["POST"])
+@limiter.limit("10 per hour", key_func=lambda: str(current_user.get_id()))
 @login_required
 def match_bulk_submit(slug, match_id):
     club = _get_club_or_404(slug)

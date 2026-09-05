@@ -7,7 +7,7 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash,
 
 from flask_login import login_required, current_user
 
-from app.extensions import db, csrf
+from app.extensions import db, csrf, limiter
 from app.models import User, CreditTransaction, PaymentRequest
 from app.utils import paypal as paypal_api
 from app.utils.email import send_user_credits_added_email
@@ -105,6 +105,7 @@ def _read_product_selection(form):
 
 
 @billing_bp.route("/checkout", methods=["POST"])
+@limiter.limit("10 per hour", key_func=lambda: str(current_user.get_id()))
 @login_required
 def create_checkout_session():
     if not current_app.config.get("PAYMENTS_ENABLED") or current_app.config.get("PAYMENT_PROVIDER") != "stripe":
@@ -234,6 +235,7 @@ def stripe_webhook():
 
 
 @billing_bp.route("/paypal/checkout", methods=["POST"])
+@limiter.limit("10 per hour", key_func=lambda: str(current_user.get_id()))
 @login_required
 def create_paypal_order():
     if not current_app.config.get("PAYMENTS_ENABLED") or current_app.config.get("PAYMENT_PROVIDER") != "paypal":
