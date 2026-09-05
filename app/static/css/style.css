@@ -176,11 +176,21 @@ input:focus-visible,
 }
 
 .nav-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 1.35rem;
   letter-spacing: -0.01em;
   color: var(--ink);
+}
+
+.nav-logo-mark {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  flex-shrink: 0;
 }
 
 /* ---------- Buttons ---------- */
@@ -1180,12 +1190,21 @@ input:focus-visible,
 }
 
 .auth-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 1.5rem;
   color: #fff;
-  display: inline-block;
   margin-bottom: 2.5rem;
+}
+
+.auth-logo-mark {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  flex-shrink: 0;
 }
 
 

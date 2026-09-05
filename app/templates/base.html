@@ -16,6 +16,7 @@
     })();
   </script>
   <title>{% block title %}Genlinklab{% endblock %}</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/logo-mark.svg') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -24,7 +25,10 @@
 <body class="min-h-screen">
   <nav class="nav">
     <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
-      <a href="{{ url_for('main.index') }}" class="nav-logo flex-shrink-0" style="white-space:nowrap">GenLinkLab</a>
+      <a href="{{ url_for('main.index') }}" class="nav-logo flex-shrink-0" style="white-space:nowrap">
+        <img src="{{ url_for('static', filename='images/logo-mark.svg') }}" alt="" class="nav-logo-mark">
+        GenLinkLab
+      </a>
       <div class="flex items-center gap-3 text-sm" style="overflow-x:auto; flex-wrap:nowrap; white-space:nowrap">
         {% if current_user.is_authenticated %}
           {% if current_user.is_admin %}
