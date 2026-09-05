@@ -6,13 +6,13 @@
     </h2>
     {% if transfer.kind == "unlimited_month" %}
       <p style="font-size:14px; color:#4a535b; line-height:1.6; margin:0;">
-        We've confirmed your bank transfer (reference {{ transfer.reference }}) and switched on
+        We've confirmed your payment (reference {{ transfer.reference }}) and switched on
         unlimited link generation until {{ user.unlimited_until.strftime('%d %b %Y') }} - no
         credits spent while it's active.
       </p>
     {% else %}
       <p style="font-size:14px; color:#4a535b; line-height:1.6; margin:0;">
-        We've confirmed your bank transfer (reference {{ transfer.reference }}) and added
+        We've confirmed your payment (reference {{ transfer.reference }}) and added
         {{ transfer.credits }} credit(s) to your balance. You now have {{ user.credits }} credit(s)
         available to spend on ticket links.
       </p>
