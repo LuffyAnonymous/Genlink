@@ -817,17 +817,22 @@ input:focus-visible,
   }
   .auth-panel-brand,
   .auth-panel-form {
-    /* Un-do the desktop 70/30 flex-basis split and centering - stacked
-       on mobile, those forced each panel to fill a share of 100vh and
-       centered its (much shorter) content inside that, leaving large
-       empty gaps above/below. Each panel should just be as tall as its
-       own content. */
+    /* min-height (not flex-grow) keeps a genuine 70/30 split without the
+       old bug: flex-grow on a 100vh-min-height shell stretched each panel
+       to fill 100% of the viewport even when combined content was much
+       shorter, and centering then left large empty gaps above the
+       content. Content stays top-aligned, so a panel only grows past its
+       70/30 share if its own content actually needs more room. */
     flex: none;
     align-items: flex-start;
     justify-content: flex-start;
   }
   .auth-panel-brand {
+    min-height: 70vh;
     padding: 2.5rem 1.5rem;
+  }
+  .auth-panel-form {
+    min-height: 30vh;
   }
   .auth-brand-inner {
     max-width: 100%;
