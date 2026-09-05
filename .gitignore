@@ -9,9 +9,8 @@ instance/
 .DS_Store
 *.log
 
-# Standalone link-generation service: contains a hardcoded proxy
-# credential and account-automation logic that shouldn't go to GitHub.
-linkgen_service/
+# Chelsea/Spurs browser tool stores its logged-in session here - never commit.
+linkgen_service/browser_profile/
 
 # Old project archive - contains a real API key, hardcoded proxy
 # credential, and unrelated business spreadsheets. Never commit this.
