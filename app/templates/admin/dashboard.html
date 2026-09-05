@@ -2,16 +2,19 @@
 {% block title %}Admin - Genlinklab{% endblock %}
 {% block content %}
 
-<div class="mb-8">
-  <p class="eyebrow mb-2">Admin</p>
-  <h1 class="display text-3xl">Dashboard</h1>
+<div class="mb-8 flex items-center justify-between flex-wrap gap-3">
+  <div>
+    <p class="eyebrow mb-2">Admin</p>
+    <h1 class="display text-3xl">Dashboard</h1>
+  </div>
+  <a href="{{ url_for('admin.analytics') }}" class="btn btn-ghost">View analytics &rarr;</a>
 </div>
 
 <!-- ===================================================== -->
 <!-- PENDING REGISTRATIONS -->
 <!-- ===================================================== -->
 <div class="mb-10">
-  <h2 class="display text-xl mb-4">Pending registrations</h2>
+  <h2 class="display text-xl mb-4" id="pending">Pending registrations</h2>
 
   {% if pending_users %}
     <div class="space-y-2">
@@ -47,7 +50,7 @@
 <!-- ALL USERS -->
 <!-- ===================================================== -->
 <div class="mb-10">
-  <h2 class="display text-xl mb-4">Users</h2>
+  <h2 class="display text-xl mb-4" id="users">Users</h2>
 
   {% if all_users %}
     <div class="space-y-2">
@@ -112,7 +115,7 @@
 <!-- MATCHES -->
 <!-- ===================================================== -->
 <div>
-  <h2 class="display text-xl mb-4">Matches</h2>
+  <h2 class="display text-xl mb-4" id="matches">Matches</h2>
 
   <div class="settings-row fade-up mb-6" style="justify-content:flex-start">
     <form method="POST" action="{{ url_for('admin.add_match') }}" class="flex items-end gap-3 flex-wrap w-full">
@@ -193,7 +196,7 @@
 <!-- BROKERS -->
 <!-- ===================================================== -->
 <div class="mt-10">
-  <h2 class="display text-xl mb-4">Brokers</h2>
+  <h2 class="display text-xl mb-4" id="brokers">Brokers</h2>
 
   <div class="settings-row fade-up mb-6" style="justify-content:flex-start">
     <form method="POST" action="{{ url_for('admin.add_broker') }}" class="flex items-end gap-3 flex-wrap w-full">

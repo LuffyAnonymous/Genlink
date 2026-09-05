@@ -8,6 +8,7 @@ from app.clubs import CLUBS, get_club
 from app.extensions import db, limiter
 from app.models import User, RegistrationToken, CreditTransaction, Match, Broker
 from app.utils.email import send_user_welcome_email
+from app.admin import analytics as admin_analytics
 
 admin_bp = Blueprint("admin", __name__)
 
@@ -42,6 +43,21 @@ def dashboard():
         matches=matches,
         clubs=CLUBS,
         brokers=brokers,
+    )
+
+
+@admin_bp.route("/analytics")
+@admin_required
+def analytics():
+    return render_template(
+        "admin/analytics.html",
+        overview=admin_analytics.compute_overview(),
+        revenue_series=admin_analytics.compute_revenue_series(),
+        topup=admin_analytics.compute_topup_analytics(),
+        user_activity=admin_analytics.compute_user_activity(),
+        club_analytics=admin_analytics.compute_club_analytics(),
+        recent_transactions=admin_analytics.compute_recent_transactions(),
+        recent_links=admin_analytics.compute_recent_link_generations(),
     )
 
 

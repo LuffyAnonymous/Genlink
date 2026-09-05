@@ -1310,3 +1310,295 @@ input:focus-visible,
     font-size: 2.2rem;
   }
 }
+
+/* ============================================================
+   Admin analytics dashboard - its own sidebar shell, separate
+   from the site's normal top-nav pages.
+   ============================================================ */
+.admin-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.admin-sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--paper-raised);
+  border-right: 1px solid var(--line);
+  padding: 1.5rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.admin-sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.15rem;
+  color: var(--ink);
+  padding: 0 0.5rem;
+}
+
+.admin-sidebar-logo img {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+}
+
+.admin-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.admin-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.admin-nav-link:hover {
+  background: var(--paper-sunken);
+  color: var(--ink);
+}
+
+.admin-nav-link.is-active {
+  background: var(--accent-100);
+  color: var(--accent-700);
+}
+
+.admin-nav-icon {
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.admin-main {
+  flex: 1;
+  min-width: 0;
+  padding: 2rem 2.5rem 3rem;
+}
+
+@media (max-width: 900px) {
+  .admin-shell {
+    flex-direction: column;
+  }
+  .admin-sidebar {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    overflow-x: auto;
+    padding: 1rem;
+  }
+  .admin-nav {
+    flex-direction: row;
+  }
+  .admin-main {
+    padding: 1.5rem 1.25rem 2.5rem;
+  }
+}
+
+/* ---------- Overview stat cards ---------- */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.stat-card {
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.4rem;
+}
+
+.stat-card-label {
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+  margin-bottom: 0.5rem;
+}
+
+.stat-card-value {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.65rem;
+  color: var(--ink);
+}
+
+/* ---------- Chart cards ---------- */
+.chart-card {
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem 1.6rem;
+}
+
+.chart-range-group {
+  display: inline-flex;
+  gap: 0.3rem;
+  background: var(--paper-sunken);
+  border-radius: var(--radius-sm);
+  padding: 0.2rem;
+}
+
+.chart-range-btn {
+  border: none;
+  background: none;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+}
+
+.chart-range-btn.is-active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.35rem;
+  height: 160px;
+  margin-top: 1.25rem;
+}
+
+.bar-chart-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.bar-chart-bar {
+  width: 100%;
+  max-width: 28px;
+  background: var(--accent);
+  border-radius: 3px 3px 0 0;
+  min-height: 2px;
+  transition: opacity 0.15s ease;
+}
+
+.bar-chart-col:hover .bar-chart-bar {
+  opacity: 0.75;
+}
+
+.bar-chart-label {
+  font-size: 0.62rem;
+  font-family: var(--font-mono);
+  color: var(--ink-faint);
+  white-space: nowrap;
+  transform: rotate(-40deg);
+  transform-origin: top center;
+  margin-top: 0.3rem;
+}
+
+/* ---------- Club ranking bars ---------- */
+.club-rank-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.club-rank-row:last-child {
+  border-bottom: none;
+}
+
+.club-rank-name {
+  font-size: 0.85rem;
+  color: var(--ink);
+  margin-bottom: 0.35rem;
+}
+
+.club-rank-track {
+  background: var(--paper-sunken);
+  border-radius: 999px;
+  height: 8px;
+  overflow: hidden;
+}
+
+.club-rank-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+.club-rank-meta {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* ---------- Data tables ---------- */
+.data-table-wrap {
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.data-table th {
+  text-align: left;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-faint);
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.data-table th.is-sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.data-table th.is-sortable:hover {
+  color: var(--ink);
+}
+
+.data-table td {
+  padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tr:hover td {
+  background: var(--paper-sunken);
+}
+
+.data-table td.is-strong {
+  color: var(--ink);
+  font-weight: 500;
+}
