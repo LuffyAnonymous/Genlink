@@ -14,7 +14,11 @@ import requests
 
 
 def _base_url(config):
-    return "https://api-m.paypal.com" if config.get("PAYPAL_MODE") == "live" else "https://api-m.sandbox.paypal.com"
+    # Case-insensitive - a stray "Live" instead of "live" in an env var
+    # would otherwise silently fall back to the sandbox endpoint, which is
+    # exactly what happened the first time this went live (real
+    # credentials rejected with 401 because they hit sandbox by mistake).
+    return "https://api-m.paypal.com" if (config.get("PAYPAL_MODE") or "").lower() == "live" else "https://api-m.sandbox.paypal.com"
 
 
 def _get_access_token(config):

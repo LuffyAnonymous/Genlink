@@ -397,10 +397,15 @@ def check_config():
             problems.append("PAYPAL_CLIENT_SECRET looks unset/placeholder - checkout will fail.")
         if not app.config.get("PAYPAL_WEBHOOK_ID"):
             problems.append("PAYPAL_WEBHOOK_ID is not set - the webhook fallback path won't work (register one in the PayPal Developer Dashboard).")
-        if app.config.get("PAYPAL_MODE") == "live":
+        paypal_mode = (app.config.get("PAYPAL_MODE") or "").strip()
+        if paypal_mode.lower() == "live":
             warnings.append("PAYPAL_MODE is LIVE - real money will be charged.")
-        elif not app.config.get("PAYPAL_MODE"):
+            if paypal_mode != "live":
+                problems.append(f"PAYPAL_MODE is {paypal_mode!r}, not exactly 'live' - fix the casing/spacing to be safe.")
+        elif not paypal_mode:
             problems.append("PAYPAL_MODE is not set.")
+        elif paypal_mode.lower() != "sandbox":
+            problems.append(f"PAYPAL_MODE is {paypal_mode!r} - expected exactly 'live' or 'sandbox'.")
 
     if not app.config.get("SESSION_COOKIE_SECURE"):
         warnings.append("SESSION_COOKIE_SECURE is off - correct for local http://, must be on anywhere real.")
