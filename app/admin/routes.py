@@ -6,7 +6,7 @@ from flask_login import login_required, current_user
 
 from app.clubs import CLUBS, get_club
 from app.extensions import db, limiter
-from app.models import User, RegistrationToken, CreditTransaction, Match
+from app.models import User, RegistrationToken, CreditTransaction, Match, Broker
 from app.utils.email import send_user_welcome_email
 
 admin_bp = Blueprint("admin", __name__)
@@ -33,6 +33,7 @@ def dashboard():
     matches = (
         Match.query.order_by(Match.club_slug.asc(), Match.kickoff_at.asc().nullslast()).all()
     )
+    brokers = Broker.query.order_by(Broker.created_at.desc()).all()
 
     return render_template(
         "admin/dashboard.html",
@@ -40,6 +41,7 @@ def dashboard():
         all_users=all_users,
         matches=matches,
         clubs=CLUBS,
+        brokers=brokers,
     )
 
 
@@ -235,4 +237,51 @@ def toggle_match(match_id):
     match.is_active = not match.is_active
     db.session.commit()
     flash(f"{match.name} is now {'active' if match.is_active else 'inactive'}.", "success")
+    return redirect(url_for("admin.dashboard"))
+
+
+@admin_bp.route("/brokers", methods=["POST"])
+@limiter.limit("100 per minute", key_func=lambda: str(current_user.get_id()))
+@admin_required
+def add_broker():
+    name = (request.form.get("name") or "").strip()
+    phone = (request.form.get("phone") or "").strip()
+    notes = (request.form.get("notes") or "").strip()
+
+    if not name or not phone:
+        flash("Enter a name and phone number.", "error")
+        return redirect(url_for("admin.dashboard"))
+
+    db.session.add(Broker(name=name, phone=phone, notes=notes or None))
+    db.session.commit()
+    flash(f"Added {name}.", "success")
+    return redirect(url_for("admin.dashboard"))
+
+
+@admin_bp.route("/brokers/<int:broker_id>/notes", methods=["POST"])
+@limiter.limit("100 per minute", key_func=lambda: str(current_user.get_id()))
+@admin_required
+def update_broker_notes(broker_id):
+    broker = db.session.query(Broker).with_for_update().get(broker_id)
+    if not broker:
+        abort(404)
+
+    broker.notes = (request.form.get("notes") or "").strip() or None
+    db.session.commit()
+    flash(f"Updated notes for {broker.name}.", "success")
+    return redirect(url_for("admin.dashboard"))
+
+
+@admin_bp.route("/brokers/<int:broker_id>/delete", methods=["POST"])
+@limiter.limit("100 per minute", key_func=lambda: str(current_user.get_id()))
+@admin_required
+def delete_broker(broker_id):
+    broker = db.session.query(Broker).with_for_update().get(broker_id)
+    if not broker:
+        abort(404)
+
+    name = broker.name
+    db.session.delete(broker)
+    db.session.commit()
+    flash(f"Removed {name}.", "success")
     return redirect(url_for("admin.dashboard"))

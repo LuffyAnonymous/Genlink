@@ -162,6 +162,21 @@ class GeneratedTicket(db.Model):
         return f"<GeneratedTicket {self.match_name} - {self.account_email}>"
 
 
+class Broker(db.Model):
+    """A potential/existing broker contact for outreach - not a customer
+    account, just a name/phone/notes the admin keeps to message brokers on
+    WhatsApp and jot down what they asked. No automatic message capture -
+    that would need the full WhatsApp Business API, not this."""
+
+    __tablename__ = "brokers"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
+    phone = db.Column(db.String(40), nullable=False)
+    notes = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+
 class Ticket(db.Model):
     __tablename__ = "tickets"
 

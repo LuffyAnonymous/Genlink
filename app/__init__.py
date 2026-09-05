@@ -45,6 +45,12 @@ def create_app(config_class=Config):
     def inject_globals():
         return {"admin_email": app.config["ADMIN_EMAIL"]}
 
+    @app.template_filter("whatsapp_url")
+    def whatsapp_url_filter(phone):
+        # wa.me wants just digits (country code + number, no +/spaces/dashes).
+        digits = "".join(ch for ch in (phone or "") if ch.isdigit())
+        return f"https://wa.me/{digits}" if digits else "#"
+
     @app.template_filter("initials")
     def initials_filter(name):
         parts = [p for p in (name or "").split() if p]

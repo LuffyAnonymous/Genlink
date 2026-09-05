@@ -189,6 +189,75 @@
   {% endif %}
 </div>
 
+<!-- ===================================================== -->
+<!-- BROKERS -->
+<!-- ===================================================== -->
+<div class="mt-10">
+  <h2 class="display text-xl mb-4">Brokers</h2>
+
+  <div class="settings-row fade-up mb-6" style="justify-content:flex-start">
+    <form method="POST" action="{{ url_for('admin.add_broker') }}" class="flex items-end gap-3 flex-wrap w-full">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="field" style="max-width:200px">
+        <label>Name</label>
+        <input type="text" name="name" required>
+      </div>
+      <div class="field" style="max-width:200px">
+        <label>Phone (with country code)</label>
+        <input type="text" name="phone" placeholder="+44 7911 123456" required>
+      </div>
+      <div class="field" style="max-width:260px">
+        <label>Notes (optional)</label>
+        <input type="text" name="notes" placeholder="Where you found them, what they asked...">
+      </div>
+      <button type="submit" class="btn btn-primary">Add broker</button>
+    </form>
+  </div>
+
+  {% if brokers %}
+    <div class="space-y-2">
+      {% for broker in brokers %}
+        <div class="ticket-row fade-up">
+          <div class="flex items-center justify-between flex-wrap gap-3 mb-3">
+            <div class="min-w-0">
+              <p class="text-sm font-medium">{{ broker.name }}</p>
+              <p class="text-xs mt-1" style="color:var(--muted)">
+                {{ broker.phone }} &middot; added {{ broker.created_at.strftime('%d %b %Y') }}
+              </p>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <a
+                href="{{ broker.phone|whatsapp_url }}"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn"
+                style="background:#25D366; border-color:#25D366; color:#fff;"
+              >
+                Message on WhatsApp
+              </a>
+              <form method="POST" action="{{ url_for('admin.delete_broker', broker_id=broker.id) }}" class="delete-broker-form" data-name="{{ broker.name }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-ghost" style="color:var(--danger)">Remove</button>
+              </form>
+            </div>
+          </div>
+
+          <form method="POST" action="{{ url_for('admin.update_broker_notes', broker_id=broker.id) }}" class="flex items-end gap-2">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="field" style="max-width:400px; flex:1">
+              <label>Notes</label>
+              <input type="text" name="notes" value="{{ broker.notes or '' }}" placeholder="Where you found them, what they asked...">
+            </div>
+            <button type="submit" class="btn btn-ghost">Save notes</button>
+          </form>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-sm" style="color:var(--muted)">No brokers added yet.</p>
+  {% endif %}
+</div>
+
 <script>
   // Built as a real JS string at runtime (not interpolated into an inline
   // attribute) - a user.email containing an apostrophe (a real pattern,
@@ -198,6 +267,15 @@
     form.addEventListener("submit", function (event) {
       var email = form.dataset.email || "this user";
       if (!confirm("Delete " + email + " and all their credits/tickets/history? This can't be undone.")) {
+        event.preventDefault();
+      }
+    });
+  });
+
+  document.querySelectorAll(".delete-broker-form").forEach(function (form) {
+    form.addEventListener("submit", function (event) {
+      var name = form.dataset.name || "this broker";
+      if (!confirm("Remove " + name + " from your broker list?")) {
         event.preventDefault();
       }
     });
