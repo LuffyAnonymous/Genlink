@@ -141,13 +141,14 @@
   <form method="GET" action="{{ url_for('admin.dashboard') }}" class="flex items-end gap-3 mb-4">
     <div class="field" style="max-width:200px">
       <label>Filter by club</label>
-      <select name="club" onchange="this.form.submit()" style="width:100%; background:var(--paper-raised); border:1px solid var(--line); color:var(--ink); padding:0.7rem 0.85rem; border-radius:var(--radius-sm); font-size:0.95rem; font-family:var(--font-body);">
+      <select name="club" style="width:100%; background:var(--paper-raised); border:1px solid var(--line); color:var(--ink); padding:0.7rem 0.85rem; border-radius:var(--radius-sm); font-size:0.95rem; font-family:var(--font-body);">
         <option value="">All clubs</option>
         {% for club in clubs %}
           <option value="{{ club.slug }}" {{ 'selected' if match_club == club.slug else '' }}>{{ club.name }}</option>
         {% endfor %}
       </select>
     </div>
+    <button type="submit" class="btn btn-ghost">Filter</button>
   </form>
 
   {% if matches %}
