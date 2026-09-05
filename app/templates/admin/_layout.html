@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem("genlinklab-theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (err) {}
+    })();
+  </script>
+  <title>{% block title %}Dashboard{% endblock %} - Genlinklab Admin</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/logo-mark.svg') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<div class="admin-shell">
+
+  <aside class="admin-sidebar">
+    <a href="{{ url_for('main.index') }}" class="admin-sidebar-logo">
+      <img src="{{ url_for('static', filename='images/logo-mark.svg') }}" alt="">
+      GenLinkLab
+    </a>
+
+    <nav class="admin-nav">
+      <a href="{{ url_for('admin.dashboard') }}" class="admin-nav-link {{ 'is-active' if active_nav == 'dashboard' }}"><span class="admin-nav-icon">&#128202;</span> Dashboard</a>
+      <a href="{{ url_for('admin.users') }}" class="admin-nav-link {{ 'is-active' if active_nav == 'users' }}"><span class="admin-nav-icon">&#128100;</span> Users</a>
+      <a href="{{ url_for('admin.brokers') }}" class="admin-nav-link {{ 'is-active' if active_nav == 'brokers' }}"><span class="admin-nav-icon">&#129309;</span> Brokers</a>
+      <a href="{{ url_for('admin.transactions') }}" class="admin-nav-link {{ 'is-active' if active_nav == 'transactions' }}"><span class="admin-nav-icon">&#128179;</span> Transactions</a>
+      <a href="{{ url_for('admin.credit_sales') }}" class="admin-nav-link {{ 'is-active' if active_nav == 'credit_sales' }}"><span class="admin-nav-icon">&#129689;</span> Credit Sales</a>
+      <a href="{{ url_for('admin.club_analytics') }}" class="admin-nav-link {{ 'is-active' if active_nav == 'club_analytics' }}"><span class="admin-nav-icon">&#9917;</span> Club Analytics</a>
+      <a href="{{ url_for('admin.link_generations') }}" class="admin-nav-link {{ 'is-active' if active_nav == 'link_generations' }}"><span class="admin-nav-icon">&#128279;</span> Link Generations</a>
+      <a href="{{ url_for('admin.reports') }}" class="admin-nav-link {{ 'is-active' if active_nav == 'reports' }}"><span class="admin-nav-icon">&#128196;</span> Reports</a>
+      <a href="{{ url_for('admin.settings') }}" class="admin-nav-link {{ 'is-active' if active_nav == 'settings' }}"><span class="admin-nav-icon">&#9881;</span> Settings</a>
+    </nav>
+  </aside>
+
+  <main class="admin-main">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="space-y-2 mb-6">
+          {% for category, message in messages %}
+            <div class="flash flash-{{ 'error' if category == 'error' else 'success' }} fade-up">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+</div>
+
+<script src="{{ url_for('static', filename='js/theme_toggle.js') }}"></script>
+{% block scripts %}{% endblock %}
+
+</body>
+</html>

@@ -1,0 +1,39 @@
+{% extends "admin/_layout.html" %}
+{% block title %}Transactions{% endblock %}
+{% block content %}
+
+<div class="mb-8">
+  <p class="eyebrow mb-2">Transactions</p>
+  <h1 class="display text-3xl">Transactions</h1>
+</div>
+
+<div class="chart-card fade-up data-table-wrap">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>User / Broker</th>
+        <th>Amount</th>
+        <th>Product</th>
+        <th>Date</th>
+        <th>Status</th>
+        <th>Provider</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for tx in recent_transactions %}
+        <tr>
+          <td class="is-strong">{{ tx.user_name }}<br><span style="color:var(--ink-faint); font-weight:400">{{ tx.user_email }}</span></td>
+          <td>&pound;{{ "%.2f"|format(tx.amount) }}</td>
+          <td>{{ tx.kind }}</td>
+          <td>{{ tx.date }}</td>
+          <td><span class="manifest-code {{ 'ok' if tx.status == 'confirmed' else 'wait' }}">{{ tx.status|upper }}</span></td>
+          <td>{{ tx.provider|capitalize }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6" style="text-align:center; color:var(--ink-faint)">No transactions yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

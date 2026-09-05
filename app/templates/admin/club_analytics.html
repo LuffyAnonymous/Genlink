@@ -1,0 +1,30 @@
+{% extends "admin/_layout.html" %}
+{% block title %}Club Analytics{% endblock %}
+{% block content %}
+
+<div class="mb-8">
+  <p class="eyebrow mb-2">Club Analytics</p>
+  <h1 class="display text-3xl">Most generated clubs</h1>
+</div>
+
+<div class="chart-card fade-up">
+  {% if club_analytics %}
+    {% for club in club_analytics %}
+      <div class="club-rank-row">
+        <div>
+          <p class="club-rank-name">{{ club.name }}</p>
+          <div class="club-rank-track">
+            <div class="club-rank-fill" style="width:{{ club.percentage }}%"></div>
+          </div>
+        </div>
+        <div class="club-rank-meta">
+          {{ club.links }} link(s) &middot; {{ club.percentage }}% &middot; {{ club.users }} user(s)
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p class="text-sm" style="color:var(--muted)">No links generated yet.</p>
+  {% endif %}
+</div>
+
+{% endblock %}

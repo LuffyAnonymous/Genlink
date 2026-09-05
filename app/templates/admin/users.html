@@ -1,0 +1,212 @@
+{% extends "admin/_layout.html" %}
+{% block title %}Users{% endblock %}
+{% block content %}
+
+<div class="mb-8">
+  <p class="eyebrow mb-2">Users</p>
+  <h1 class="display text-3xl">Users</h1>
+</div>
+
+<!-- ===================================================== -->
+<!-- PENDING REGISTRATIONS -->
+<!-- ===================================================== -->
+<div class="mb-10">
+  <p class="section-label mb-4">Pending registrations</p>
+
+  {% if pending_users %}
+    <div class="space-y-2">
+      {% for user in pending_users %}
+        <div class="ticket-row flex items-center justify-between flex-wrap gap-3 fade-up">
+          <div class="min-w-0">
+            <p class="text-sm font-medium">{{ user.name }}</p>
+            <p class="text-xs mt-1" style="color:var(--muted)">
+              {{ user.email }}{% if user.phone %} &middot; {{ user.phone }}{% endif %}
+              &middot; requested {{ user.created_at.strftime('%d %b %Y, %H:%M') }}
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <form method="POST" action="{{ url_for('admin.decline_user', user_id=user.id) }}"
+                  onsubmit="return confirm('Decline and remove this registration request?');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-ghost">Decline</button>
+            </form>
+            <form method="POST" action="{{ url_for('admin.approve_user', user_id=user.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-primary">Approve</button>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-sm" style="color:var(--muted)">No pending registrations.</p>
+  {% endif %}
+</div>
+
+<!-- ===================================================== -->
+<!-- ALL USERS -->
+<!-- ===================================================== -->
+<div class="mb-10">
+  <p class="section-label mb-4">All users</p>
+
+  {% if all_users %}
+    <div class="space-y-2">
+      {% for user in all_users %}
+        <div class="ticket-row fade-up">
+          <div class="flex items-center justify-between flex-wrap gap-3 mb-3">
+            <div class="min-w-0">
+              <p class="text-sm font-medium">
+                {{ user.name }}
+                {% if user.is_admin %}<span class="manifest-code wait">ADMIN</span>{% endif %}
+              </p>
+              <p class="text-xs mt-1" style="color:var(--muted)">{{ user.email }}</p>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="manifest-code {{ 'ok' if user.is_approved else 'wait' }}">
+                {{ 'APPROVED' if user.is_approved else 'PENDING' }}
+              </span>
+              {% if user.has_unlimited %}
+                <span class="mono text-sm">Unlimited until {{ user.unlimited_until.strftime('%d %b %Y') }}</span>
+              {% else %}
+                <span class="mono text-sm">{{ user.credits }} credit(s)</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="flex items-end gap-4 flex-wrap">
+            <form method="POST" action="{{ url_for('admin.adjust_credits', user_id=user.id) }}" class="flex items-end gap-2">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <div class="field" style="max-width:140px">
+                <label>Adjust credits</label>
+                <input type="number" name="delta" placeholder="e.g. 10 or -5" required>
+              </div>
+              <button type="submit" class="btn btn-ghost">Apply</button>
+            </form>
+
+            <form method="POST" action="{{ url_for('admin.grant_unlimited', user_id=user.id) }}" class="flex items-end gap-2">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <div class="field" style="max-width:110px">
+                <label>Unlimited (days)</label>
+                <input type="number" name="days" value="30" min="1" required>
+              </div>
+              <button type="submit" class="btn btn-ghost">Grant</button>
+            </form>
+
+            {% if not user.is_admin %}
+              <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" class="ml-auto delete-user-form"
+                    data-email="{{ user.email }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-ghost" style="color:var(--danger)">Delete user</button>
+              </form>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-sm" style="color:var(--muted)">No users yet.</p>
+  {% endif %}
+</div>
+
+<!-- ===================================================== -->
+<!-- USER ACTIVITY -->
+<!-- ===================================================== -->
+<div>
+  <div class="flex items-center justify-between flex-wrap gap-3 mb-4">
+    <p class="section-label">User activity</p>
+    <input type="text" id="user-activity-search" placeholder="Search name or email..." class="mono" style="background:var(--paper-raised); border:1px solid var(--line); border-radius:var(--radius-sm); padding:0.5rem 0.8rem; font-size:0.82rem; color:var(--ink); max-width:260px; width:100%;">
+  </div>
+
+  <div class="chart-card fade-up data-table-wrap">
+    <table class="data-table" id="user-activity-table">
+      <thead>
+        <tr>
+          <th class="is-sortable" data-sort="name">User</th>
+          <th>Email</th>
+          <th class="is-sortable" data-sort="totalSpent">Total spent</th>
+          <th class="is-sortable" data-sort="creditsPurchased">Credits purchased</th>
+          <th class="is-sortable" data-sort="topupCount">Top-ups</th>
+          <th class="is-sortable" data-sort="lastPurchase">Last purchase</th>
+          <th class="is-sortable" data-sort="linksGenerated">Links generated</th>
+          <th>Most generated club</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in user_activity %}
+          <tr
+            data-name="{{ row.name|lower }}"
+            data-email="{{ row.email|lower }}"
+            data-total-spent="{{ row.total_spent }}"
+            data-credits-purchased="{{ row.credits_purchased }}"
+            data-topup-count="{{ row.topup_count }}"
+            data-last-purchase="{{ row.last_purchase_sort }}"
+            data-links-generated="{{ row.links_generated }}"
+          >
+            <td class="is-strong">{{ row.name }}</td>
+            <td>{{ row.email }}</td>
+            <td>&pound;{{ "%.2f"|format(row.total_spent) }}</td>
+            <td>{{ "%.0f"|format(row.credits_purchased) }}</td>
+            <td>{{ row.topup_count }}</td>
+            <td>{{ row.last_purchase }}</td>
+            <td>{{ row.links_generated }}</td>
+            <td>{{ row.most_club }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="8" style="text-align:center; color:var(--ink-faint)">No users yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+  document.querySelectorAll(".delete-user-form").forEach(function (form) {
+    form.addEventListener("submit", function (event) {
+      var email = form.dataset.email || "this user";
+      if (!confirm("Delete " + email + " and all their credits/tickets/history? This can't be undone.")) {
+        event.preventDefault();
+      }
+    });
+  });
+
+  var searchInput = document.getElementById("user-activity-search");
+  if (searchInput) {
+    searchInput.addEventListener("input", function () {
+      var term = searchInput.value.trim().toLowerCase();
+      document.querySelectorAll("#user-activity-table tbody tr").forEach(function (row) {
+        if (!row.dataset.name) return;
+        var match = !term || row.dataset.name.includes(term) || row.dataset.email.includes(term);
+        row.style.display = match ? "" : "none";
+      });
+    });
+  }
+
+  document.querySelectorAll(".data-table th[data-sort]").forEach(function (th) {
+    var ascending = true;
+    th.addEventListener("click", function () {
+      var key = th.dataset.sort;
+      var tbody = th.closest("table").querySelector("tbody");
+      var rows = Array.from(tbody.querySelectorAll("tr")).filter(function (r) {
+        return r.dataset[key] !== undefined;
+      });
+      rows.sort(function (a, b) {
+        var av = a.dataset[key];
+        var bv = b.dataset[key];
+        var an = parseFloat(av);
+        var bn = parseFloat(bv);
+        var cmp;
+        if (!isNaN(an) && !isNaN(bn) && av !== "" && bv !== "") {
+          cmp = an - bn;
+        } else {
+          cmp = String(av).localeCompare(String(bv));
+        }
+        return ascending ? cmp : -cmp;
+      });
+      rows.forEach(function (r) { tbody.appendChild(r); });
+      ascending = !ascending;
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,122 @@
+{% extends "admin/_layout.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+
+<div class="mb-8">
+  <p class="eyebrow mb-2">Settings</p>
+  <h1 class="display text-3xl">Settings</h1>
+</div>
+
+<!-- ===================================================== -->
+<!-- ACCOUNT -->
+<!-- ===================================================== -->
+<div class="mb-10">
+  <p class="section-label mb-4">Your account</p>
+  <div class="settings-row fade-up mb-4">
+    <div>
+      <p class="setting-title">{{ current_user.name }}</p>
+      <p class="setting-description">{{ current_user.email }}</p>
+    </div>
+  </div>
+
+  <div class="chart-card fade-up" style="max-width:420px">
+    <p class="section-label mb-4">Change password</p>
+    <form method="POST" action="{{ url_for('admin.change_password') }}" class="space-y-4">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="field">
+        <label for="current_password">Current password</label>
+        <input type="password" id="current_password" name="current_password" required autocomplete="current-password">
+      </div>
+      <div class="field">
+        <label for="new_password">New password</label>
+        <input type="password" id="new_password" name="new_password" required minlength="8" autocomplete="new-password">
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Update password</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===================================================== -->
+<!-- MATCHES -->
+<!-- ===================================================== -->
+<div>
+  <p class="section-label mb-4">Matches</p>
+
+  <div class="settings-row fade-up mb-6" style="justify-content:flex-start">
+    <form method="POST" action="{{ url_for('admin.add_match') }}" class="flex items-end gap-3 flex-wrap w-full">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="field" style="max-width:160px">
+        <label>Club</label>
+        <select name="club_slug" required style="width:100%; background:var(--paper-raised); border:1px solid var(--line); color:var(--ink); padding:0.7rem 0.85rem; border-radius:var(--radius-sm); font-size:0.95rem; font-family:var(--font-body);">
+          {% for club in clubs %}
+            <option value="{{ club.slug }}">{{ club.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field" style="max-width:180px">
+        <label>Opponent (away team)</label>
+        <input type="text" name="away_team" required>
+      </div>
+      <div class="field" style="max-width:220px">
+        <label>Kickoff (optional)</label>
+        <input type="datetime-local" name="kickoff_at">
+      </div>
+      <button type="submit" class="btn btn-primary">Add match</button>
+    </form>
+    <p class="text-xs mt-2" style="color:var(--muted)">Always added as this club's home fixture - tickets for an away game aren't sold through this club's own automation.</p>
+  </div>
+
+  <div class="field mb-4" style="max-width:200px">
+    <label>Filter by club</label>
+    <select id="match-club-filter" style="width:100%; background:var(--paper-raised); border:1px solid var(--line); color:var(--ink); padding:0.7rem 0.85rem; border-radius:var(--radius-sm); font-size:0.95rem; font-family:var(--font-body);">
+      <option value="">All clubs</option>
+      {% for club in clubs %}
+        <option value="{{ club.slug }}">{{ club.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  {% if matches %}
+    <div class="space-y-2" id="match-list">
+      {% for match in matches %}
+        <div class="ticket-row {{ 'is-ok' if match.is_active else 'is-fail' }} flex items-center justify-between flex-wrap gap-3" data-club-slug="{{ match.club_slug }}">
+          <div class="min-w-0">
+            <p class="text-sm font-medium">{{ match.name }}</p>
+            <p class="text-xs mt-1" style="color:var(--muted)">
+              {{ match.club_slug }}
+              &middot;
+              {% if match.kickoff_at %}{{ match.kickoff_at.strftime('%d %b %Y, %H:%M') }}{% else %}Date TBC{% endif %}
+            </p>
+          </div>
+          <form method="POST" action="{{ url_for('admin.toggle_match', match_id=match.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-ghost">{{ 'Deactivate' if match.is_active else 'Activate' }}</button>
+          </form>
+        </div>
+      {% endfor %}
+    </div>
+    <p class="text-sm" id="match-list-empty" style="color:var(--muted); display:none">No matches for that club.</p>
+  {% else %}
+    <p class="text-sm" style="color:var(--muted)">No matches yet.</p>
+  {% endif %}
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+  var filter = document.getElementById("match-club-filter");
+  if (filter) {
+    filter.addEventListener("change", function () {
+      var slug = this.value;
+      var rows = document.querySelectorAll("#match-list [data-club-slug]");
+      var visibleCount = 0;
+      rows.forEach(function (row) {
+        var show = !slug || row.dataset.clubSlug === slug;
+        row.style.display = show ? "" : "none";
+        if (show) visibleCount++;
+      });
+      document.getElementById("match-list-empty").style.display = visibleCount === 0 ? "" : "none";
+    });
+  }
+</script>
+{% endblock %}

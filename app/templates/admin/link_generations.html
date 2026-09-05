@@ -1,0 +1,33 @@
+{% extends "admin/_layout.html" %}
+{% block title %}Link Generations{% endblock %}
+{% block content %}
+
+<div class="mb-8">
+  <p class="eyebrow mb-2">Link Generations</p>
+  <h1 class="display text-3xl">Recent link generations</h1>
+</div>
+
+<div class="chart-card fade-up data-table-wrap">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>User / Broker</th>
+        <th>Club</th>
+        <th>Date/time</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for link in recent_links %}
+        <tr>
+          <td class="is-strong">{{ link.user_name }}<br><span style="color:var(--ink-faint); font-weight:400">{{ link.user_email }}</span></td>
+          <td>{{ link.club }}</td>
+          <td>{{ link.date }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="3" style="text-align:center; color:var(--ink-faint)">No links generated yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

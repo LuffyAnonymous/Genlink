@@ -1,0 +1,30 @@
+{% extends "admin/_layout.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+
+<div class="mb-8">
+  <p class="eyebrow mb-2">Reports</p>
+  <h1 class="display text-3xl">Reports</h1>
+  <p class="text-sm mt-2" style="color:var(--muted)">Download the current data behind each dashboard as a CSV file.</p>
+</div>
+
+<div class="stat-grid">
+  <div class="stat-card fade-up">
+    <p class="stat-card-label mb-3">User activity</p>
+    <a href="{{ url_for('admin.export_report', dataset='users') }}" class="btn btn-ghost btn-block">Download CSV</a>
+  </div>
+  <div class="stat-card fade-up">
+    <p class="stat-card-label mb-3">Transactions</p>
+    <a href="{{ url_for('admin.export_report', dataset='transactions') }}" class="btn btn-ghost btn-block">Download CSV</a>
+  </div>
+  <div class="stat-card fade-up">
+    <p class="stat-card-label mb-3">Link generations</p>
+    <a href="{{ url_for('admin.export_report', dataset='link-generations') }}" class="btn btn-ghost btn-block">Download CSV</a>
+  </div>
+  <div class="stat-card fade-up">
+    <p class="stat-card-label mb-3">Club analytics</p>
+    <a href="{{ url_for('admin.export_report', dataset='clubs') }}" class="btn btn-ghost btn-block">Download CSV</a>
+  </div>
+</div>
+
+{% endblock %}

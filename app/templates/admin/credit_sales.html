@@ -1,0 +1,44 @@
+{% extends "admin/_layout.html" %}
+{% block title %}Credit Sales{% endblock %}
+{% block content %}
+
+<div class="mb-8">
+  <p class="eyebrow mb-2">Credit Sales</p>
+  <h1 class="display text-3xl">Credit sales &amp; top-ups</h1>
+</div>
+
+<div class="stat-grid mb-8">
+  <div class="stat-card fade-up">
+    <p class="stat-card-label">Total topped up</p>
+    <p class="stat-card-value">&pound;{{ "%.2f"|format(topup.total_amount) }}</p>
+  </div>
+  <div class="stat-card fade-up">
+    <p class="stat-card-label">Top-up transactions</p>
+    <p class="stat-card-value">{{ topup.count }}</p>
+  </div>
+  <div class="stat-card fade-up">
+    <p class="stat-card-label">Average top-up</p>
+    <p class="stat-card-value">&pound;{{ "%.2f"|format(topup.average) }}</p>
+  </div>
+  <div class="stat-card fade-up">
+    <p class="stat-card-label">Most popular package</p>
+    <p class="stat-card-value" style="font-size:1.1rem">{{ topup.most_popular }}</p>
+  </div>
+</div>
+
+<div class="chart-card fade-up">
+  <p class="section-label mb-2">Purchases per day - last 30 days</p>
+  {% set max_val = topup['series']['values']|max %}
+  <div class="bar-chart">
+    {% for value in topup['series']['values'] %}
+      <div class="bar-chart-col">
+        <div class="bar-chart-bar" style="height:{{ ((value / max_val * 100) if max_val else 0)|round(1) }}%" title="{{ value }} purchase(s)"></div>
+        {% if loop.index0 % 3 == 0 %}
+          <span class="bar-chart-label">{{ topup['series']['labels'][loop.index0] }}</span>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}
