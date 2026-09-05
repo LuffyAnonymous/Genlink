@@ -93,8 +93,8 @@
             </form>
 
             {% if not user.is_admin %}
-              <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" class="ml-auto"
-                    onsubmit="return confirm('Delete {{ user.email }} and all their credits/tickets/history? This can\'t be undone.');">
+              <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" class="ml-auto delete-user-form"
+                    data-email="{{ user.email }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn btn-ghost" style="color:var(--danger)">Delete user</button>
               </form>
@@ -188,5 +188,20 @@
     <p class="text-sm" style="color:var(--muted)">No matches yet.</p>
   {% endif %}
 </div>
+
+<script>
+  // Built as a real JS string at runtime (not interpolated into an inline
+  // attribute) - a user.email containing an apostrophe (a real pattern,
+  // e.g. O'Brien) previously broke the inline onsubmit's JS syntax, which
+  // made the confirmation silently not fire at all instead of showing it.
+  document.querySelectorAll(".delete-user-form").forEach(function (form) {
+    form.addEventListener("submit", function (event) {
+      var email = form.dataset.email || "this user";
+      if (!confirm("Delete " + email + " and all their credits/tickets/history? This can't be undone.")) {
+        event.preventDefault();
+      }
+    });
+  });
+</script>
 
 {% endblock %}

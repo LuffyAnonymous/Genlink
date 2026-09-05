@@ -118,6 +118,7 @@ def match_generate(slug, match_id):
 
 
 @main_bp.route("/tickets/<slug>/<int:match_id>/manual", methods=["POST"])
+@limiter.limit("30 per minute", key_func=lambda: str(current_user.get_id()))
 @login_required
 def match_manual_submit(slug, match_id):
     """For clubs without an automated login API (currently Chelsea and
