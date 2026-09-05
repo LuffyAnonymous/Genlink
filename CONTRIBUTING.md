@@ -12,7 +12,7 @@ plain terms:
 1. A customer registers, and an admin manually approves the account (email
    with a one-click approve link).
 2. The customer buys **credits** by bank transfer - GBP 1 = 1 credit - or a
-   flat **£1500 unlimited-for-30-days pass**. Either way, an admin manually
+   flat **£999 unlimited-for-30-days pass**. Either way, an admin manually
    confirms the transfer arrived (another one-click email link) before
    anything is added to the account. There's no payment gateway; it's
    entirely manual, on purpose - no way to fake a payment.

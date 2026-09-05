@@ -16,7 +16,7 @@ billing_bp = Blueprint("billing", __name__)
 
 PRESET_PACKAGES = [10, 25, 50, 100]
 
-UNLIMITED_MONTH_PRICE = 1500  # GBP, flat price
+UNLIMITED_MONTH_PRICE = 999  # GBP, flat price
 UNLIMITED_MONTH_DAYS = 30
 
 
