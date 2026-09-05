@@ -371,14 +371,36 @@ def check_config():
     if not app.config.get("LINKGEN_API_KEY"):
         warnings.append("LINKGEN_API_KEY is not set.")
 
-    stripe_secret = app.config.get("STRIPE_SECRET_KEY") or ""
-    if not stripe_secret or "replace" in stripe_secret.lower():
-        problems.append("STRIPE_SECRET_KEY looks unset/placeholder - checkout will fail.")
-    elif stripe_secret.startswith("sk_live_"):
-        warnings.append("STRIPE_SECRET_KEY is a LIVE key - real money will be charged.")
+    payments_enabled = app.config.get("PAYMENTS_ENABLED")
+    provider = app.config.get("PAYMENT_PROVIDER")
+    if not payments_enabled:
+        warnings.append("PAYMENTS_ENABLED is false - the buy-credits page shows a 'temporarily unavailable' notice, no checkout is possible right now.")
+    else:
+        warnings.append(f"PAYMENTS_ENABLED is true, PAYMENT_PROVIDER={provider} - real checkout is live.")
 
-    if not app.config.get("STRIPE_WEBHOOK_SECRET"):
-        problems.append("STRIPE_WEBHOOK_SECRET is not set - the webhook will reject every event Stripe sends.")
+    if provider == "stripe":
+        stripe_secret = app.config.get("STRIPE_SECRET_KEY") or ""
+        if not stripe_secret or "replace" in stripe_secret.lower():
+            problems.append("STRIPE_SECRET_KEY looks unset/placeholder - checkout will fail.")
+        elif stripe_secret.startswith("sk_live_"):
+            warnings.append("STRIPE_SECRET_KEY is a LIVE key - real money will be charged.")
+
+        if not app.config.get("STRIPE_WEBHOOK_SECRET"):
+            problems.append("STRIPE_WEBHOOK_SECRET is not set - the webhook will reject every event Stripe sends.")
+
+    elif provider == "paypal":
+        paypal_id = app.config.get("PAYPAL_CLIENT_ID") or ""
+        paypal_secret = app.config.get("PAYPAL_CLIENT_SECRET") or ""
+        if not paypal_id or "replace" in paypal_id.lower():
+            problems.append("PAYPAL_CLIENT_ID looks unset/placeholder - checkout will fail.")
+        if not paypal_secret or "replace" in paypal_secret.lower():
+            problems.append("PAYPAL_CLIENT_SECRET looks unset/placeholder - checkout will fail.")
+        if not app.config.get("PAYPAL_WEBHOOK_ID"):
+            problems.append("PAYPAL_WEBHOOK_ID is not set - the webhook fallback path won't work (register one in the PayPal Developer Dashboard).")
+        if app.config.get("PAYPAL_MODE") == "live":
+            warnings.append("PAYPAL_MODE is LIVE - real money will be charged.")
+        elif not app.config.get("PAYPAL_MODE"):
+            problems.append("PAYPAL_MODE is not set.")
 
     if not app.config.get("SESSION_COOKIE_SECURE"):
         warnings.append("SESSION_COOKIE_SECURE is off - correct for local http://, must be on anywhere real.")
