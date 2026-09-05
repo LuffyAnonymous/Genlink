@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}Admin - Genlinklab{% endblock %}
+{% block content %}
+
+<div class="mb-8">
+  <p class="eyebrow mb-2">Admin</p>
+  <h1 class="display text-3xl">Dashboard</h1>
+</div>
+
+<!-- ===================================================== -->
+<!-- PENDING REGISTRATIONS -->
+<!-- ===================================================== -->
+<div class="mb-10">
+  <h2 class="display text-xl mb-4">Pending registrations</h2>
+
+  {% if pending_users %}
+    <div class="space-y-2">
+      {% for user in pending_users %}
+        <div class="ticket-row flex items-center justify-between flex-wrap gap-3 fade-up">
+          <div class="min-w-0">
+            <p class="text-sm font-medium">{{ user.name }}</p>
+            <p class="text-xs mt-1" style="color:var(--muted)">
+              {{ user.email }}{% if user.phone %} &middot; {{ user.phone }}{% endif %}
+              &middot; requested {{ user.created_at.strftime('%d %b %Y, %H:%M') }}
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <form method="POST" action="{{ url_for('admin.decline_user', user_id=user.id) }}"
+                  onsubmit="return confirm('Decline and remove this registration request?');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-ghost">Decline</button>
+            </form>
+            <form method="POST" action="{{ url_for('admin.approve_user', user_id=user.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-primary">Approve</button>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-sm" style="color:var(--muted)">No pending registrations.</p>
+  {% endif %}
+</div>
+
+<!-- ===================================================== -->
+<!-- ALL USERS -->
+<!-- ===================================================== -->
+<div class="mb-10">
+  <h2 class="display text-xl mb-4">Users</h2>
+
+  {% if all_users %}
+    <div class="space-y-2">
+      {% for user in all_users %}
+        <div class="ticket-row fade-up">
+          <div class="flex items-center justify-between flex-wrap gap-3 mb-3">
+            <div class="min-w-0">
+              <p class="text-sm font-medium">
+                {{ user.name }}
+                {% if user.is_admin %}<span class="manifest-code wait">ADMIN</span>{% endif %}
+              </p>
+              <p class="text-xs mt-1" style="color:var(--muted)">{{ user.email }}</p>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="manifest-code {{ 'ok' if user.is_approved else 'wait' }}">
+                {{ 'APPROVED' if user.is_approved else 'PENDING' }}
+              </span>
+              {% if user.has_unlimited %}
+                <span class="mono text-sm">Unlimited until {{ user.unlimited_until.strftime('%d %b %Y') }}</span>
+              {% else %}
+                <span class="mono text-sm">{{ user.credits }} credit(s)</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="flex items-end gap-4 flex-wrap">
+            <form method="POST" action="{{ url_for('admin.adjust_credits', user_id=user.id) }}" class="flex items-end gap-2">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <div class="field" style="max-width:140px">
+                <label>Adjust credits</label>
+                <input type="number" name="delta" placeholder="e.g. 10 or -5" required>
+              </div>
+              <button type="submit" class="btn btn-ghost">Apply</button>
+            </form>
+
+            <form method="POST" action="{{ url_for('admin.grant_unlimited', user_id=user.id) }}" class="flex items-end gap-2">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <div class="field" style="max-width:110px">
+                <label>Unlimited (days)</label>
+                <input type="number" name="days" value="30" min="1" required>
+              </div>
+              <button type="submit" class="btn btn-ghost">Grant</button>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-sm" style="color:var(--muted)">No users yet.</p>
+  {% endif %}
+</div>
+
+<!-- ===================================================== -->
+<!-- MATCHES -->
+<!-- ===================================================== -->
+<div>
+  <h2 class="display text-xl mb-4">Matches</h2>
+
+  <div class="settings-row fade-up mb-6" style="justify-content:flex-start">
+    <form method="POST" action="{{ url_for('admin.add_match') }}" class="flex items-end gap-3 flex-wrap w-full">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="field" style="max-width:160px">
+        <label>Club</label>
+        <select name="club_slug" required style="width:100%; background:var(--paper-raised); border:1px solid var(--line); color:var(--ink); padding:0.7rem 0.85rem; border-radius:var(--radius-sm); font-size:0.95rem; font-family:var(--font-body);">
+          {% for club in clubs %}
+            <option value="{{ club.slug }}">{{ club.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field" style="max-width:180px">
+        <label>Home team</label>
+        <input type="text" name="home_team" required>
+      </div>
+      <div class="field" style="max-width:180px">
+        <label>Away team</label>
+        <input type="text" name="away_team" required>
+      </div>
+      <div class="field" style="max-width:220px">
+        <label>Kickoff (optional)</label>
+        <input type="datetime-local" name="kickoff_at">
+      </div>
+      <button type="submit" class="btn btn-primary">Add match</button>
+    </form>
+  </div>
+
+  {% if matches %}
+    <div class="space-y-2">
+      {% for match in matches %}
+        <div class="ticket-row {{ 'is-ok' if match.is_active else 'is-fail' }} flex items-center justify-between flex-wrap gap-3">
+          <div class="min-w-0">
+            <p class="text-sm font-medium">{{ match.name }}</p>
+            <p class="text-xs mt-1" style="color:var(--muted)">
+              {{ match.club_slug }}
+              &middot;
+              {% if match.kickoff_at %}{{ match.kickoff_at.strftime('%d %b %Y, %H:%M') }}{% else %}Date TBC{% endif %}
+            </p>
+          </div>
+          <form method="POST" action="{{ url_for('admin.toggle_match', match_id=match.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-ghost">{{ 'Deactivate' if match.is_active else 'Activate' }}</button>
+          </form>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-sm" style="color:var(--muted)">No matches yet.</p>
+  {% endif %}
+</div>
+
+{% endblock %}

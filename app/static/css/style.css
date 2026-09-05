@@ -543,6 +543,11 @@ input:focus-visible,
   background: var(--danger-tint);
 }
 
+.manifest-code.wait {
+  color: var(--ink-faint);
+  background: var(--paper-sunken);
+}
+
 /* ---------- Credit balance figure ---------- */
 .credit-counter {
   font-family: var(--font-mono);

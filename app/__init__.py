@@ -33,11 +33,13 @@ def create_app(config_class=Config):
     from app.auth.routes import auth_bp
     from app.billing.routes import billing_bp
     from app.api.routes import api_bp
+    from app.admin.routes import admin_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(billing_bp, url_prefix="/credits")
     app.register_blueprint(api_bp, url_prefix="/api")
+    app.register_blueprint(admin_bp, url_prefix="/admin")
 
     @app.context_processor
     def inject_globals():

@@ -254,6 +254,58 @@ def migrate_stripe_billing():
         print("Migration complete.")
 
 
+@app.cli.command("migrate-admin")
+def migrate_admin():
+    """One-time migration adding users.is_admin for the admin dashboard.
+    Safe to re-run - skips if the column already exists.
+    Run with: flask --app wsgi.py migrate-admin"""
+    from sqlalchemy import inspect, text
+
+    with app.app_context():
+        cols = {c["name"] for c in inspect(db.engine).get_columns("users")}
+        if "is_admin" not in cols:
+            with db.engine.begin() as conn:
+                conn.execute(text("ALTER TABLE users ADD COLUMN is_admin BOOLEAN NOT NULL DEFAULT FALSE"))
+            print("Added users.is_admin.")
+        else:
+            print("users.is_admin already exists - skipping.")
+
+
+@app.cli.command("create-admin")
+@click.option("--email", required=True, help="Admin's login email")
+@click.option("--name", required=True, help="Admin's display name")
+@click.option("--password", required=True, prompt=True, hide_input=True, confirmation_prompt=True)
+def create_admin(email, name, password):
+    """Create a new admin account, or promote/reset an existing one to
+    admin if that email is already registered. Skips the normal
+    registration-approval flow entirely - the account is usable
+    immediately. Safe to re-run.
+    Run with: flask --app wsgi.py create-admin --email you@example.com --name "Your Name" """
+    with app.app_context():
+        email = email.lower().strip()
+        user = User.query.filter_by(email=email).first()
+        if user:
+            user.name = name.strip()
+            user.password_hash = generate_password_hash(password)
+            user.is_admin = True
+            user.is_approved = True
+            db.session.commit()
+            print(f"Promoted existing user {email} to admin.")
+        else:
+            user = User(
+                name=name.strip(),
+                email=email,
+                phone="",
+                password_hash=generate_password_hash(password),
+                is_approved=True,
+                approved_at=datetime.utcnow(),
+                is_admin=True,
+            )
+            db.session.add(user)
+            db.session.commit()
+            print(f"Created admin account {email}.")
+
+
 @app.cli.command("check-config")
 def check_config():
     """Quick sanity check of the current .env - catches the mistakes that

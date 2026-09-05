@@ -18,7 +18,7 @@ main_bp = Blueprint("main", __name__)
 @main_bp.route("/")
 def index():
     if current_user.is_authenticated:
-        return redirect(url_for("main.ticket_manager"))
+        return redirect(url_for("admin.dashboard") if current_user.is_admin else url_for("main.ticket_manager"))
     return render_template("main/index.html")
 
 

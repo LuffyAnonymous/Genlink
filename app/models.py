@@ -14,6 +14,7 @@ class User(db.Model, UserMixin):
 
     is_approved = db.Column(db.Boolean, default=False, nullable=False)
     approved_at = db.Column(db.DateTime, nullable=True)
+    is_admin = db.Column(db.Boolean, default=False, nullable=False)
 
     credits = db.Column(db.Integer, default=0, nullable=False)
 
