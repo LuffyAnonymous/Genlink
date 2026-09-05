@@ -91,6 +91,14 @@
               </div>
               <button type="submit" class="btn btn-ghost">Grant</button>
             </form>
+
+            {% if not user.is_admin %}
+              <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" class="ml-auto"
+                    onsubmit="return confirm('Delete {{ user.email }} and all their credits/tickets/history? This can\'t be undone.');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-ghost" style="color:var(--danger)">Delete user</button>
+              </form>
+            {% endif %}
           </div>
         </div>
       {% endfor %}
@@ -118,11 +126,7 @@
         </select>
       </div>
       <div class="field" style="max-width:180px">
-        <label>Home team</label>
-        <input type="text" name="home_team" required>
-      </div>
-      <div class="field" style="max-width:180px">
-        <label>Away team</label>
+        <label>Opponent (away team)</label>
         <input type="text" name="away_team" required>
       </div>
       <div class="field" style="max-width:220px">
@@ -131,7 +135,20 @@
       </div>
       <button type="submit" class="btn btn-primary">Add match</button>
     </form>
+    <p class="text-xs mt-2" style="color:var(--muted)">Always added as this club's home fixture - tickets for an away game aren't sold through this club's own automation.</p>
   </div>
+
+  <form method="GET" action="{{ url_for('admin.dashboard') }}" class="flex items-end gap-3 mb-4">
+    <div class="field" style="max-width:200px">
+      <label>Filter by club</label>
+      <select name="club" onchange="this.form.submit()" style="width:100%; background:var(--paper-raised); border:1px solid var(--line); color:var(--ink); padding:0.7rem 0.85rem; border-radius:var(--radius-sm); font-size:0.95rem; font-family:var(--font-body);">
+        <option value="">All clubs</option>
+        {% for club in clubs %}
+          <option value="{{ club.slug }}" {{ 'selected' if match_club == club.slug else '' }}>{{ club.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </form>
 
   {% if matches %}
     <div class="space-y-2">
@@ -153,7 +170,7 @@
       {% endfor %}
     </div>
   {% else %}
-    <p class="text-sm" style="color:var(--muted)">No matches yet.</p>
+    <p class="text-sm" style="color:var(--muted)">{{ 'No matches for that club yet.' if match_club else 'No matches yet.' }}</p>
   {% endif %}
 </div>
 

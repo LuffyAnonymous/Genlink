@@ -30,14 +30,19 @@ def dashboard():
         User.query.filter_by(is_approved=False).order_by(User.created_at.asc()).all()
     )
     all_users = User.query.order_by(User.created_at.desc()).all()
-    matches = (
-        Match.query.order_by(Match.club_slug.asc(), Match.kickoff_at.asc().nullslast()).all()
-    )
+
+    match_club = (request.args.get("club") or "").strip()
+    match_query = Match.query
+    if match_club and get_club(match_club):
+        match_query = match_query.filter_by(club_slug=match_club)
+    matches = match_query.order_by(Match.club_slug.asc(), Match.kickoff_at.asc().nullslast()).all()
+
     return render_template(
         "admin/dashboard.html",
         pending_users=pending_users,
         all_users=all_users,
         matches=matches,
+        match_club=match_club,
         clubs=CLUBS,
     )
 
@@ -159,17 +164,41 @@ def grant_unlimited(user_id):
     return redirect(url_for("admin.dashboard"))
 
 
+@admin_bp.route("/users/<int:user_id>/delete", methods=["POST"])
+@admin_required
+def delete_user(user_id):
+    user = db.session.query(User).with_for_update().get(user_id)
+    if not user:
+        abort(404)
+
+    if user.is_admin:
+        flash("Can't delete an admin account here.", "error")
+        return redirect(url_for("admin.dashboard"))
+
+    email = user.email
+    db.session.delete(user)
+    db.session.commit()
+
+    flash(f"Deleted {email} and all their data.", "success")
+    return redirect(url_for("admin.dashboard"))
+
+
 @admin_bp.route("/matches", methods=["POST"])
 @admin_required
 def add_match():
     club_slug = (request.form.get("club_slug") or "").strip()
-    home_team = (request.form.get("home_team") or "").strip()
     away_team = (request.form.get("away_team") or "").strip()
     kickoff_raw = (request.form.get("kickoff_at") or "").strip()
 
-    if not get_club(club_slug) or not home_team or not away_team:
-        flash("Fill in the club, home team, and away team.", "error")
+    club = get_club(club_slug)
+    if not club or not away_team:
+        flash("Fill in the club and the opponent.", "error")
         return redirect(url_for("admin.dashboard"))
+
+    # This club is always the home side here - tickets for an away fixture
+    # aren't sold through this club's own automation/portal, so away
+    # fixtures are never entered under a club's slug.
+    home_team = club["name"]
 
     kickoff_at = None
     if kickoff_raw:
