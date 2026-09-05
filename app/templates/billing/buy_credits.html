@@ -2,16 +2,29 @@
 {% block title %}Buy credits - Genlinklab{% endblock %}
 {% block content %}
 
-<div class="max-w-2xl mx-auto">
-  <p class="eyebrow mb-3">GBP 1 = 1 credit</p>
-  <h1 class="display text-3xl mb-2">Top up your balance</h1>
-  <p class="text-sm mb-10" style="color:var(--muted)">
-    {% if current_user.has_unlimited %}
-      Unlimited access active until <span class="mono">{{ current_user.unlimited_until.strftime('%d %b %Y') }}</span> - credits below are only spent once that expires.
-    {% else %}
-      Current balance: <span class="mono">{{ current_user.credits }}</span> credits
-    {% endif %}
-  </p>
+<div class="max-w-6xl mx-auto">
+
+  <div class="mb-8">
+    <p class="eyebrow mb-2">Billing</p>
+    <h1 class="display text-3xl">Top up your balance</h1>
+  </div>
+
+  <!-- Current balance -->
+  <div class="balance-card mb-10 fade-up">
+    <div>
+      <p class="balance-card-label">Current balance</p>
+      {% if current_user.has_unlimited %}
+        <p class="balance-card-figure">Unlimited</p>
+        <p class="balance-card-sub">
+          Active until {{ current_user.unlimited_until.strftime('%d %b %Y') }} - credits below are only spent once that expires.
+        </p>
+      {% else %}
+        <p class="balance-card-figure">{{ current_user.credits }} <span>credits</span></p>
+        <p class="balance-card-sub">GBP 1 = 1 credit, spent only on a successful link. Failed attempts cost nothing.</p>
+      {% endif %}
+    </div>
+    <span class="balance-card-icon">&#129689;</span>
+  </div>
 
   {% if not payments_enabled %}
     <div class="ticket-row is-fail fade-up">
@@ -22,48 +35,83 @@
       </p>
     </div>
   {% else %}
+
   <form method="POST" action="{{ url_for('billing.create_paypal_order') if payment_provider == 'paypal' else url_for('billing.create_checkout_session') }}" id="buy-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="product" id="product-field" value="credits">
+    <input type="hidden" name="credits" id="credits">
 
-    <p class="eyebrow mb-3">Pay per link</p>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-      {% for amount in presets %}
-        <label class="package-card ticket-row block cursor-pointer">
-          <input type="radio" name="credits_radio" value="{{ amount }}" class="hidden package-radio">
-          <p class="display text-2xl mb-1">{{ amount }}</p>
-          <p class="text-xs" style="color:var(--muted)">&pound;{{ amount }}.00</p>
-        </label>
-      {% endfor %}
-    </div>
+    <div class="grid lg:grid-cols-3 gap-8 items-start">
 
-    <div class="docket fade-up mb-8">
-      <div class="docket-body">
-        <div class="field">
-          <label for="credits">Or enter a custom amount</label>
-          <input type="number" id="credits" name="credits" min="1" max="10000" placeholder="e.g. 75">
+      <!-- Left: package picker -->
+      <div class="lg:col-span-2 space-y-8">
+
+        <div>
+          <p class="section-label mb-4">Pay per link</p>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+            {% for amount in presets %}
+              <button type="button" class="credit-package fade-up" data-kind="credits" data-value="{{ amount }}" data-price="{{ amount }}">
+                <span class="credit-package-check">&#10003;</span>
+                <span class="credit-package-amount">{{ amount }}</span>
+                <span class="credit-package-price">&pound;{{ amount }}.00</span>
+              </button>
+            {% endfor %}
+          </div>
+
+          <div class="custom-amount-card fade-up">
+            <label for="custom-credits">Or enter a custom amount</label>
+            <div class="custom-amount-input-wrap">
+              <span class="custom-amount-prefix">&pound;</span>
+              <input type="number" id="custom-credits" min="1" max="10000" placeholder="e.g. 75" autocomplete="off">
+            </div>
+          </div>
         </div>
+
+        <div>
+          <p class="section-label mb-4">Or go unlimited</p>
+
+          <button type="button" class="premium-card fade-up" data-kind="unlimited_month" data-value="{{ unlimited_price }}" data-price="{{ unlimited_price }}">
+            <span class="credit-package-check">&#10003;</span>
+            <span class="premium-card-badge">Best value</span>
+            <span class="premium-card-title">Unlimited for 30 days</span>
+            <span class="premium-card-desc">Every link you generate is free for a month - no credits spent, no balance to watch.</span>
+            <ul class="premium-card-features">
+              <li>Unlimited link generation for 30 days</li>
+              <li>No per-credit charges while active</li>
+              <li>Your credit balance stays banked for after it expires</li>
+            </ul>
+            <span class="premium-card-price">&pound;{{ unlimited_price }} <span>/ 30 days</span></span>
+          </button>
+        </div>
+
       </div>
-      <div class="docket-tab">
-        <span class="docket-tab-label">&pound; GBP</span>
+
+      <!-- Right: order summary -->
+      <div class="order-summary-card fade-up">
+        <p class="section-label mb-4">Order summary</p>
+
+        <div class="order-summary-row">
+          <span id="summary-label" style="color:var(--muted)">No package selected</span>
+          <span id="summary-price" class="mono">&pound;0.00</span>
+        </div>
+
+        <div class="order-summary-total">
+          <span>Total due today</span>
+          <span id="summary-total" class="mono">&pound;0.00</span>
+        </div>
+
+        <button type="submit" id="submit-payment" class="btn btn-primary btn-block btn-generate" disabled>
+          Continue to payment
+        </button>
+
+        <p class="text-xs text-center mt-3" style="color:var(--muted)">
+          You'll pay securely with {{ 'PayPal' if payment_provider == 'paypal' else 'Stripe' }}. Credits (or unlimited access) are added automatically the
+          moment payment succeeds.
+        </p>
       </div>
+
     </div>
-
-    <p class="eyebrow mb-3">Or go unlimited</p>
-    <label class="package-card ticket-row block cursor-pointer mb-8" id="unlimited-card" style="display:flex; align-items:center; justify-content:space-between; gap:1rem;">
-      <input type="radio" name="credits_radio" value="unlimited" class="hidden package-radio" id="unlimited-radio">
-      <span>
-        <span class="display text-xl" style="display:block">Unlimited for 30 days</span>
-        <span class="text-xs" style="color:var(--muted)">Every link you generate is free for a month - no credits spent, no balance to watch.</span>
-      </span>
-      <span class="display text-2xl" style="white-space:nowrap">&pound;{{ unlimited_price }}</span>
-    </label>
-
-    <button type="submit" class="btn btn-primary btn-block">Continue to payment</button>
-    <p class="text-xs text-center mt-3" style="color:var(--muted)">
-      You'll pay securely with {{ 'PayPal' if payment_provider == 'paypal' else 'Stripe' }}. Credits (or unlimited access) are added automatically the
-      moment payment succeeds.
-    </p>
   </form>
   {% endif %}
 </div>
@@ -71,35 +119,79 @@
 {% endblock %}
 {% block scripts %}
 <script>
-  const productField = document.getElementById('product-field');
-  const creditsInput = document.getElementById('credits');
-  const unlimitedCard = document.getElementById('unlimited-card');
+document.addEventListener("DOMContentLoaded", () => {
+  const productField = document.getElementById("product-field");
+  const creditsField = document.getElementById("credits");
+  const customInput = document.getElementById("custom-credits");
+  const packages = document.querySelectorAll(".credit-package, .premium-card");
+  const summaryLabel = document.getElementById("summary-label");
+  const summaryPrice = document.getElementById("summary-price");
+  const summaryTotal = document.getElementById("summary-total");
+  const submitBtn = document.getElementById("submit-payment");
 
-  document.querySelectorAll('.package-card').forEach((card) => {
-    card.addEventListener('click', () => {
-      document.querySelectorAll('.package-card').forEach((c) => c.classList.remove('selected'));
-      card.classList.add('selected');
-      const radio = card.querySelector('.package-radio');
-      radio.checked = true;
+  if (!productField) return; // payments disabled - none of this markup exists
 
-      if (radio.value === 'unlimited') {
-        productField.value = 'unlimited_month';
-        creditsInput.value = '';
-        creditsInput.required = false;
-        creditsInput.disabled = true;
-      } else {
-        productField.value = 'credits';
-        creditsInput.disabled = false;
-        creditsInput.required = true;
-        creditsInput.value = radio.value;
-      }
+  function formatGBP(value) {
+    return "£" + Number(value || 0).toFixed(2);
+  }
+
+  function clearSelection() {
+    packages.forEach((p) => p.classList.remove("is-selected"));
+  }
+
+  function updateSummary(label, price) {
+    summaryLabel.textContent = label;
+    summaryLabel.style.color = "var(--ink)";
+    summaryPrice.textContent = formatGBP(price);
+    summaryTotal.textContent = formatGBP(price);
+    submitBtn.disabled = false;
+  }
+
+  function resetSummary() {
+    summaryLabel.textContent = "No package selected";
+    summaryLabel.style.color = "var(--muted)";
+    summaryPrice.textContent = formatGBP(0);
+    summaryTotal.textContent = formatGBP(0);
+    submitBtn.disabled = true;
+  }
+
+  packages.forEach((el) => {
+    el.addEventListener("click", () => {
+      clearSelection();
+      el.classList.add("is-selected");
+      customInput.value = "";
+
+      const kind = el.dataset.kind;
+      const value = el.dataset.value;
+      const price = el.dataset.price;
+
+      productField.value = kind;
+      creditsField.value = value;
+
+      updateSummary(
+        kind === "unlimited_month" ? "Unlimited access - 30 days" : `${value} credit(s)`,
+        price
+      );
     });
   });
 
-  creditsInput.addEventListener('input', () => {
-    productField.value = 'credits';
-    creditsInput.required = true;
-    document.querySelectorAll('.package-card').forEach((c) => c.classList.remove('selected'));
+  customInput.addEventListener("input", () => {
+    clearSelection();
+    const value = parseInt(customInput.value, 10);
+
+    if (!value || value < 1) {
+      productField.value = "credits";
+      creditsField.value = "";
+      resetSummary();
+      return;
+    }
+
+    productField.value = "credits";
+    creditsField.value = value;
+    updateSummary(`${value} credit(s)`, value);
   });
+
+  resetSummary();
+});
 </script>
 {% endblock %}

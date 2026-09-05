@@ -416,6 +416,311 @@ input:focus-visible,
   }
 }
 
+/* ============================================================
+   Buy Credits - billing dashboard redesign
+   ============================================================ */
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+
+/* ---------- Current balance card ---------- */
+.balance-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem 2rem;
+}
+
+.balance-card-label {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  margin-bottom: 0.5rem;
+}
+
+.balance-card-figure {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 2.4rem;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.balance-card-figure span {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 1rem;
+  color: var(--ink-soft);
+  margin-left: 0.35rem;
+}
+
+.balance-card-sub {
+  font-size: 0.82rem;
+  color: var(--ink-faint);
+  margin-top: 0.6rem;
+  max-width: 46ch;
+}
+
+.balance-card-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+/* ---------- Interactive credit package cards ---------- */
+.credit-package {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
+  width: 100%;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 1.1rem 1.25rem;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.credit-package:hover {
+  border-color: var(--line-strong);
+  transform: translateY(-2px);
+}
+
+.credit-package.is-selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-100);
+}
+
+.credit-package-amount {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.5rem;
+  color: var(--ink);
+}
+
+.credit-package-price {
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+}
+
+.credit-package-check {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.65rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.is-selected .credit-package-check {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ---------- Custom amount ---------- */
+.custom-amount-card {
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 1.1rem 1.25rem;
+}
+
+.custom-amount-card label {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  margin-bottom: 0.6rem;
+}
+
+.custom-amount-input-wrap {
+  display: flex;
+  align-items: center;
+  background: var(--paper-sunken);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.custom-amount-input-wrap:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-100);
+}
+
+.custom-amount-prefix {
+  padding: 0.7rem 0 0.7rem 0.85rem;
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+}
+
+.custom-amount-input-wrap input {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  outline: none;
+  padding: 0.7rem 0.85rem;
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-family: var(--font-body);
+}
+
+/* ---------- Premium unlimited card ---------- */
+.premium-card {
+  position: relative;
+  display: block;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  background: linear-gradient(160deg, var(--accent-100), var(--paper-raised) 55%);
+  border: 1px solid var(--accent-300);
+  border-radius: var(--radius-lg);
+  padding: 1.6rem 1.85rem;
+  font-family: var(--font-body);
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.premium-card:hover {
+  transform: translateY(-2px);
+}
+
+.premium-card.is-selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-100);
+}
+
+.premium-card .credit-package-check {
+  top: 1.1rem;
+  right: 1.1rem;
+}
+
+.premium-card-badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent-700);
+  background: var(--paper-raised);
+  border: 1px solid var(--accent-300);
+  border-radius: 999px;
+  padding: 0.2rem 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.premium-card-title {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.3rem;
+  color: var(--ink);
+  margin-bottom: 0.4rem;
+}
+
+.premium-card-desc {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  max-width: 46ch;
+  margin-bottom: 1rem;
+}
+
+.premium-card-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.25rem 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.premium-card-features li {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  padding-left: 1.3rem;
+  position: relative;
+}
+
+.premium-card-features li::before {
+  content: "\2713";
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.premium-card-price {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.6rem;
+  color: var(--ink);
+}
+
+.premium-card-price span {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+}
+
+/* ---------- Order summary ---------- */
+.order-summary-card {
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 1.6rem 1.75rem;
+}
+
+.order-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.88rem;
+  color: var(--ink);
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.order-summary-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--ink);
+  margin-bottom: 1.35rem;
+}
+
+@media (min-width: 1024px) {
+  .order-summary-card {
+    position: sticky;
+  }
+}
+
 /* ---------- Flash messages ---------- */
 .flash {
   border-radius: var(--radius-sm);
